@@ -1,8 +1,8 @@
 * Question
 - In the =sentence_d= variable, why are they (sentence, string index) pairs by
-  default? See =load_embedding_hnb=
+  default? See =load_embedding_hnb= *YB*: the hdf5 file structure comes from [[https://github.com/nelson-liu/contextual-repr-analysis/blob/master/contexteval/contextualizers/precomputed_contextualizer.py][Nelson's code]]. Maybe going through the string is a sanity check to make sure we're consistent with the same sentences. Feel free to use it differently though.
 - How do I interpret the embeddings? See =load_embeddings_hnb=
-  I think these are num_layers x len(sentence) x num_neurons. I need to verify. 
+  I think these are num_layers x len(sentence) x num_neurons. I need to verify. *YB: yes, this is correct*
   - num_layers
   - len(sentence)
     Fairly certain
