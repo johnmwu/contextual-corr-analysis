@@ -1,0 +1,18 @@
+Tools to probe important neurons of a neural network. 
+
+I'll use org files as the default enhanced text file format. 
+
+Files
+- main.py
+  Script to execute. i.e ./main.py ...
+
+  Name may change (Fri Jun 14 15:20:45 EDT 2019)
+
+- misc.org
+  Default case for relevant information. Contains the weekly updates. 
+
+- *_hnb.ipynb
+  "Helper notebook." These files are to 
+  - help me code
+  - help the reader understand
+  the resulting .py files. 

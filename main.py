@@ -1,15 +1,18 @@
 """
 Compute correlations between contextualizer
 
-Usage: main.py METHOD EMBEDDING_FILES OUTPUT_FILE
+Usage: 
+  main.py METHOD EMBEDDING_FILES OUTPUT_FILE
 
 Arguments:
-    METHOD            Correlation method to use (Options: min, max, linreg, svcca, cka)
-    EMBEDDING_FILES   File containing list of locations of embedding files (one per line)
-    OUTPUT_FILE       File to write the output correlations in json format
+  METHOD            Correlation method to use. Choose from one of
+                        "min", "max", "linreg", "svcca", "cka"
+  EMBEDDING_FILES   File containing list of locations of embedding files 
+                        (one per line)
+  OUTPUT_FILE       File to write the output correlations in json format
 
 Options:
-    -h, --help                             show this help message  
+  -h, --help                             show this help message  
 
 """
 
@@ -22,11 +25,7 @@ from itertools import product as p
 from tqdm import tqdm
 from corr_methods import MaxCorr, MinCorr, LinReg, SVCCA, CKA
 
-
-
-
 def main(method, embedding_files, output_file):
-
     print('Initializing method ' + method) 
     if method == 'max':
         method = MaxCorr(embedding_files)
@@ -49,8 +48,6 @@ def main(method, embedding_files, output_file):
         
     print('writing correlations to ' + output_file)
     method.write_correlations(output_file)
-
-        
 
 
 if __name__ == '__main__':

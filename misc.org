@@ -1,0 +1,39 @@
+* Question
+- In the =sentence_d= variable, why are they (sentence, string index) pairs by
+  default? See =load_embedding_hnb=
+- How do I interpret the embeddings? See =load_embeddings_hnb=
+  I think these are num_layers x len(sentence) x num_neurons. I need to verify. 
+  - num_layers
+  - len(sentence)
+    Fairly certain
+  - num_neurons
+* Progress update
+** Fri Jun 14 14:53:49 EDT 2019
+In emacs org-mode, there should be a way to set it up so that when tasks are
+completed, they are automatically appended to some file. I have yet to set this
+up, so I'll just describe in words what I did. I may end up just doing things
+this way. 
+
+This week, I: (not necessarily in this order)
+- Configured my environment (and settled in)
+  - bash, emacs, etc.
+  - conda
+- Learned about PyTorch
+  - 60 min blitz
+  - "Deep Learning for NLP with Pytorch"
+- Did some reading
+- Began coding 
+
+Hopefully, by the end of today, I'll make a commit. 
+
+You were right, I really like PyTorch. I think its define-by-run semantics
+is an especially neat idea. I also like how it seems to expose just the right
+amount of detail to the end user (leading to pseudocode-like cleanness, but
+still extremely configurable). 
+
+I anticipate that I should be able to finish coding contextual-corr-analysis by
+next week. It is not a lot, but I'm taking some time to get used to the modules
+used. 
+
+By the way, I heard you telling Jim that your brother is getting married. Have a
+good time!

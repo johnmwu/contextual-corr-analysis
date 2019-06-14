@@ -8,7 +8,8 @@ import h5py
 
 class Method(object):
 
-    def __init__(self, embedding_files, layer=None, first_half_only=False, second_half_only=False):
+    def __init__(self, embedding_files, layer=None, first_half_only=False,
+                 second_half_only=False):
 
         self.embedding_files = [line.strip() for line in embedding_files]
         self.first_half_only = first_half_only
@@ -21,12 +22,14 @@ class Method(object):
             Maximum number of sentences to use
         """
 
-        # TODO: rename all these representations/activations/embeddings to make sense 
+        # TODO: rename all these representations/activations/embeddings to make
+        # sense
 
         self.num_neurons = {} 
         self.activations = {}
         for fname in tqdm(self.embedding_files, desc='loading'):
-            # this follows contexteval: https://github.com/nelson-liu/contextual-repr-analysis/blob/master/contexteval/contextualizers/precomputed_contextualizer.py
+            # this follows contexteval:
+            # https://github.com/nelson-liu/contextual-repr-analysis/blob/master/contexteval/contextualizers/precomputed_contextualizer.py
             representations = h5py.File(fname)
             sentence_to_index = json.loads(representations.get('sentence_to_index')[0])            
             indices = list(keys())[:limit]
@@ -49,8 +52,8 @@ class Method(object):
 
                 activations.append(representation)
 
-
             # TODO: verify num neurons is correct
+            # I don't think it is...
             self.num_neurons[fname] = len(activations[0][0])             
             activations = torch.cat([torch.stack([torch.cat(token) for token in sentence]) for sentence in activations]).cpu() 
             self.activations[fname] = activations
