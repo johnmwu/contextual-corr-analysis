@@ -7,65 +7,64 @@ import h5py
 
 
 class Method(object):
+    """
+    Abstract representation of a correlation method. 
 
+    Example instances are MaxCorr, MinCorr, LinReg, SVCCA, CKA. 
+    """
     def __init__(self, embedding_files, layer=None, first_half_only=False,
                  second_half_only=False):
-
         self.embedding_files = [line.strip() for line in embedding_files]
         self.first_half_only = first_half_only
         self.second_half_only = second_half_only
 
+    def load_embeddings(self, limit=None):
+        self.num_neurons_d = {}
+        self.embeddings_d = {}
 
-    def load_embeddings(self, limit=np.inf):
-        """
-        limit: int
-            Maximum number of sentences to use
-        """
-
-        # TODO: rename all these representations/activations/embeddings to make
-        # sense
-
-        self.num_neurons = {} 
-        self.activations = {}
-        for fname in tqdm(self.embedding_files, desc='loading'):
-            # this follows contexteval:
+        for fname in tqdm(embedding_files, desc='loading'):
+            # this (the formatting) follows contexteval:
             # https://github.com/nelson-liu/contextual-repr-analysis/blob/master/contexteval/contextualizers/precomputed_contextualizer.py
-            representations = h5py.File(fname)
-            sentence_to_index = json.loads(representations.get('sentence_to_index')[0])            
-            indices = list(keys())[:limit]
-            activations = []
-            for sentence_ids in indices:
-                representation = torch.FloatTensor(representations[sentence_ids])
-                num_layers = 1 if representations.dim() == 2 else representation.size(0)
-                
-                if representation.dim() == 3:
-                    if self.layer is not None:
-                        representation = representation[self.layer]
+            # Create `activations_h5`, `sentence_d`, `indices`
+            activations_h5 = h5py.File(fname)
+            sentence_d = json.loads(activations_h5['sentence_to_index'][0])
+            temp = {}
+            for k, v in sentence_d.items():
+                temp[v] = k
+            sentence_d = temp # {str ix, sentence}
+            indices = list(sentence_d.keys())[:limit]
+
+            # Create `embeddings_l`
+            embeddings_l = []
+            for sentence_ix in indices: 
+                # Create `activations`
+                activations = torch.FloatTensor(activations_h5[sentence_ix])
+                if not (activations.dim() == 2 or activations.dim() == 3):
+                    raise ValueError('Improper array shape in file: ' + fname +
+                                     "\nShape: " + str(activations.shape))
+
+                # Create `embeddings`
+                embeddings = activations
+                if activations.dim() == 3:
+                    if self.layer is not None: 
+                        embeddings = activations[self.layer] 
                     else:
-                        # use the top layer by default 
-                        representation = representation[num_layers]
-
-                if self.first_half_only:
-                    representation = torch.chunk(representation, chunks=2, dim=-1)[0]
+                        # use the top layer by default
+                        embeddings = activations[-1]
+                if self.first_half_only: 
+                    embeddings = torch.chunk(embeddings, chunks=2, dim=-1)[0]
                 elif self.second_half_only:
-                    representation = torch.chunk(representation, chunks=2, dim=-1)[1]
+                    embeddings = torch.chunk(embeddings, chunks=2, dim=-1)[1]
 
-                activations.append(representation)
+                embeddings_l.append(embeddings)
 
-            # TODO: verify num neurons is correct
-            # I don't think it is...
-            self.num_neurons[fname] = len(activations[0][0])             
-            activations = torch.cat([torch.stack([torch.cat(token) for token in sentence]) for sentence in activations]).cpu() 
-            self.activations[fname] = activations
-
+            self.num_neurons_d[fname] = embeddings_l[0].size(1)
+            self.embeddings_d[fname] = torch.cat(embeddings_l)
 
     def compute_correlations(self):
-
         raise NotImplementedError
 
-
     def write_correlations(self):
-
         raise NotImplementedError
 
 

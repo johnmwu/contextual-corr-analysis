@@ -1,12 +1,39 @@
 * Question
-- In the =sentence_d= variable, why are they (sentence, string index) pairs by
-  default? See =load_embedding_hnb= *YB*: the hdf5 file structure comes from [[https://github.com/nelson-liu/contextual-repr-analysis/blob/master/contexteval/contextualizers/precomputed_contextualizer.py][Nelson's code]]. Maybe going through the string is a sanity check to make sure we're consistent with the same sentences. Feel free to use it differently though.
-- How do I interpret the embeddings? See =load_embeddings_hnb=
-  I think these are num_layers x len(sentence) x num_neurons. I need to verify. *YB: yes, this is correct*
-  - num_layers
-  - len(sentence)
+- [X] In the =sentence_d= variable, why are they (sentence, string index) pairs by
+  default? See =load_embedding_hnb= *YB*: the hdf5 file structure comes from
+  [[https://github.com/nelson-liu/contextual-repr-analysis/blob/master/contexteval/contextualizers/precomputed_contextualizer.py][Nelson's code]]. Maybe going through the string is a sanity check to make sure
+  we're consistent with the same sentences. Feel free to use it differently
+  though.
+
+- [X] How do I interpret the embeddings? See =load_embeddings_hnb= I think these are
+  num_layers x len(sentence) x num_neurons. I need to verify. *YB: yes, this is
+  correct*
+  - [X] num_layers
+  - [X] len(sentence)
     Fairly certain
-  - num_neurons
+  - [X] num_neurons
+
+- [ ] Is there a reason for the =first_half_only= and =second_half_only= variables?
+  Seems kind of arbitrary to me. 
+
+- [ ] What does the following line of code mean:
+  #+BEGIN_SRC python
+    activations = torch.cat([torch.stack([torch.cat(token) for token in sentence])
+                             for sentence in activations]).cpu() 
+    self.activations[fname] = activations
+  #+END_SRC
+  I'm particularly confused about the first line -- what is trying to be
+  accomplished here? For the moment (Mon Jun 17 13:06:56 EDT 2019) I'll just
+  replace the first line with torch.cat(activations), because that's what I
+  think is meant. 
+* Misc
+- As it is (Mon Jun 17 12:41:34 EDT 2019), the data will be loaded on each call
+  of the script. As far as I can tell, the data loading is a significant portion
+  of the runtime, so this may not be the smartest. Maybe change the architecture
+  later. 
+- Is there a reason why we need a "Method" class? Why can't everything be
+  unrolled into a single, large script?
+
 * Progress update
 ** Fri Jun 14 14:53:49 EDT 2019
 In emacs org-mode, there should be a way to set it up so that when tasks are
