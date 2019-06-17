@@ -14,7 +14,7 @@
   - [X] num_neurons
 
 - [ ] Is there a reason for the =first_half_only= and =second_half_only= variables?
-  Seems kind of arbitrary to me. 
+  Seems kind of arbitrary to me. *YB*: yes, this is for ELMo, where the first half is the forward RNN representations and the second half is the backward ENN representations. In practice, they are often concatenated and treated together, but having the option to separate them is useful. 
 
 - [ ] What does the following line of code mean:
   #+BEGIN_SRC python
@@ -25,14 +25,14 @@
   I'm particularly confused about the first line -- what is trying to be
   accomplished here? For the moment (Mon Jun 17 13:06:56 EDT 2019) I'll just
   replace the first line with torch.cat(activations), because that's what I
-  think is meant. 
+  think is meant. *YB*: no, that would be wrong. The expression "torch.stack([torch.cat(token) for token in sentence]" concatenates a list of tokens along a new dimension (that's from the stack method). Then, all these new tensors are concatenated along the same dimension. 
 * Misc
 - As it is (Mon Jun 17 12:41:34 EDT 2019), the data will be loaded on each call
   of the script. As far as I can tell, the data loading is a significant portion
   of the runtime, so this may not be the smartest. Maybe change the architecture
-  later. 
+  later. *YB*: agree, especially since we may want to apply all correlation methods on the same data. 
 - Is there a reason why we need a "Method" class? Why can't everything be
-  unrolled into a single, large script?
+  unrolled into a single, large script? *YB*: eventually, we may want to call these from another program (e.g., NeuroX) so having a separate file for defining the methods which is different from where they are called would be useful. 
 
 * Progress update
 ** Fri Jun 14 14:53:49 EDT 2019
