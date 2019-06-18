@@ -4,7 +4,6 @@
   [[https://github.com/nelson-liu/contextual-repr-analysis/blob/master/contexteval/contextualizers/precomputed_contextualizer.py][Nelson's code]]. Maybe going through the string is a sanity check to make sure
   we're consistent with the same sentences. Feel free to use it differently
   though.
-
 - [X] How do I interpret the embeddings? See =load_embeddings_hnb= I think these are
   num_layers x len(sentence) x num_neurons. I need to verify. *YB: yes, this is
   correct*
@@ -12,10 +11,12 @@
   - [X] len(sentence)
     Fairly certain
   - [X] num_neurons
-
-- [ ] Is there a reason for the =first_half_only= and =second_half_only= variables?
-  Seems kind of arbitrary to me. *YB*: yes, this is for ELMo, where the first half is the forward RNN representations and the second half is the backward ENN representations. In practice, they are often concatenated and treated together, but having the option to separate them is useful. 
-
+- [X] Is there a reason for the =first_half_only= and =second_half_only= 
+  Seems kind of arbitrary to me. *YB*: yes, this is for
+  ELMo, where the first half is the forward RNN representations and the second
+  half is the backward ENN representations. In practice, they are often
+  concatenated and treated together, but having the option to separate them is
+  useful.
 - [ ] What does the following line of code mean:
   #+BEGIN_SRC python
     activations = torch.cat([torch.stack([torch.cat(token) for token in sentence])
@@ -25,7 +26,28 @@
   I'm particularly confused about the first line -- what is trying to be
   accomplished here? For the moment (Mon Jun 17 13:06:56 EDT 2019) I'll just
   replace the first line with torch.cat(activations), because that's what I
-  think is meant. *YB*: no, that would be wrong. The expression "torch.stack([torch.cat(token) for token in sentence]" concatenates a list of tokens along a new dimension (that's from the stack method). Then, all these new tensors are concatenated along the same dimension. 
+  think is meant. 
+  
+  *YB*: no, that would be wrong. The
+  expression "torch.stack([torch.cat(token) for token in sentence]" concatenates
+  a list of tokens along a new dimension (that's from the stack method). Then,
+  all these new tensors are concatenated along the same dimension. 
+
+  *MW*: Still kind of confused. The expression torch.cat(token) is not valid;
+  =token= is a tensor, so you can't =torch.cat= it. Could you let me know
+  exactly what sort of tensor is desired?  
+
+  As it is, torch.cat(activations) (or now, torch.cat(representations_l)) is a
+  shape (num_words, num_neurons) tensor, where num_words is the number of words
+  in the corpus. This is exactly what we need to perform correlations among
+  different neurons, no? See cell 15 of the hnb. Of course, what I did gets rid
+  of the information regarding what sentence a particular representation came
+  from.
+- [ ] Mon Jun 17 14:14:52 EDT 2019 Style wise, is everything ok? 
+   Answer for the the updated =load_embeddings= function
+- [ ] In the Method class, we provide the ability to specify how things are
+  loaded (first half only, etc.). However, in the main.py script, these options
+  are unavailable. Why is this?
 * Misc
 - As it is (Mon Jun 17 12:41:34 EDT 2019), the data will be loaded on each call
   of the script. As far as I can tell, the data loading is a significant portion

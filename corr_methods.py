@@ -12,17 +12,23 @@ class Method(object):
 
     Example instances are MaxCorr, MinCorr, LinReg, SVCCA, CKA. 
     """
-    def __init__(self, embedding_files, layer=None, first_half_only=False,
+    def __init__(self, representation_files, layer=None, first_half_only=False,
                  second_half_only=False):
-        self.embedding_files = [line.strip() for line in embedding_files]
+        self.representation_files = [line.strip() for line in representation_files]
         self.first_half_only = first_half_only
         self.second_half_only = second_half_only
 
-    def load_embeddings(self, limit=None):
-        self.num_neurons_d = {}
-        self.embeddings_d = {}
+    def load_representations(self, limit=None):
+        """
+        Load data. 
 
-        for fname in tqdm(embedding_files, desc='loading'):
+        Set `self.num_neurons_d` and `self.representations_d`. 
+        """
+
+        self.num_neurons_d = {}
+        self.representations_d = {}
+
+        for fname in tqdm(representation_files, desc='loading'):
             # this (the formatting) follows contexteval:
             # https://github.com/nelson-liu/contextual-repr-analysis/blob/master/contexteval/contextualizers/precomputed_contextualizer.py
             # Create `activations_h5`, `sentence_d`, `indices`
@@ -34,8 +40,8 @@ class Method(object):
             sentence_d = temp # {str ix, sentence}
             indices = list(sentence_d.keys())[:limit]
 
-            # Create `embeddings_l`
-            embeddings_l = []
+            # Create `representations_l`
+            representations_l = []
             for sentence_ix in indices: 
                 # Create `activations`
                 activations = torch.FloatTensor(activations_h5[sentence_ix])
@@ -43,23 +49,23 @@ class Method(object):
                     raise ValueError('Improper array shape in file: ' + fname +
                                      "\nShape: " + str(activations.shape))
 
-                # Create `embeddings`
-                embeddings = activations
+                # Create `representations`
+                representations = activations
                 if activations.dim() == 3:
                     if self.layer is not None: 
-                        embeddings = activations[self.layer] 
+                        representations = activations[self.layer] 
                     else:
                         # use the top layer by default
-                        embeddings = activations[-1]
+                        representations = activations[-1]
                 if self.first_half_only: 
-                    embeddings = torch.chunk(embeddings, chunks=2, dim=-1)[0]
+                    representations = torch.chunk(representations, chunks=2, dim=-1)[0]
                 elif self.second_half_only:
-                    embeddings = torch.chunk(embeddings, chunks=2, dim=-1)[1]
+                    representations = torch.chunk(representations, chunks=2, dim=-1)[1]
 
-                embeddings_l.append(embeddings)
+                representations_l.append(representations)
 
-            self.num_neurons_d[fname] = embeddings_l[0].size(1)
-            self.embeddings_d[fname] = torch.cat(embeddings_l)
+            self.num_neurons_d[fname] = representations_l[0].size()[1]
+            self.representations_d[fname] = torch.cat(representations_l) # TO DO: .cpu()?
 
     def compute_correlations(self):
         raise NotImplementedError
@@ -69,26 +75,26 @@ class Method(object):
 
 
 class MaxMinCorr(Method):
-
-    def __init__(self, embedding_files, op):
-        super().__init__(embedding_files)
-
+    def __init__(self, representation_files, op):
+        super().__init__(representation_files)
 
     def compute_correlations(self, op):
-
         # Get means and stdevs so that we can whiten appropriately
         means = {}
         stdevs = {}
-        for network in tqdm(self.activations, desc='mu, sigma'):
-            means[network] = self.activations[network].mean(0, keepdim=True)
+        for network in tqdm(self.representations_d, desc='mu, sigma'):
+            means[network] = self.representations_d[network].mean(0, keepdim=True)
             stdevs[network] = (
-                self.activations[network] - means[network].expand_as(self.activations[network])
+                self.representations_d[network] - means[network].expand_as(self.representations_d[network])
             ).pow(2).mean(0, keepdim=True).pow(0.5)
 
-        self.correlations = {network: {} for network in self.activations}
+        self.correlations = {network: {} for network in self.representations_d}
 
         # Get all correlation pairs
-        for network, other_network in tqdm(p(self.activations, self.activations), desc='correlate', total=len(self.activations)**2):
+        for network, other_network in tqdm(p(self.representations_d,
+                                             self.representations_d),
+                                           desc='correlate',
+                                           total=len(self.representations_d)**2):
             # TODO: relax this, but be careful about the max (it will be self)
             # Don't match within one network
             if network == other_network:
@@ -97,8 +103,8 @@ class MaxMinCorr(Method):
             # Correlate these networks with each other
             covariance = (
                 torch.mm(
-                    self.activations[network].t(), self.activations[other_network] # E[ab]
-                ) / self.activations[network].size()[0]
+                    self.representations_d[network].t(), self.representations_d[other_network] # E[ab]
+                ) / self.representations_d[network].size()[0]
                 - torch.mm(
                     means[network].t(), means[other_network] # E[a]E[b]
                 )
@@ -111,8 +117,8 @@ class MaxMinCorr(Method):
             self.correlations[network][other_network] = correlation.cpu().numpy()
 
         # Get all "best correlation pairs"
-        self.clusters = {network: {} for network in self.activations}
-        for network, neuron in tqdm(self.activations, desc='clusters', total=len(self.activations)):
+        self.clusters = {network: {} for network in self.representations_d}
+        for network, neuron in tqdm(self.representations_d, desc='clusters', total=len(self.representations_d)):
             for neuron in tqdm(range(self.num_neurons[network])): 
                 self.clusters[network][neuron] = {
                     other: max(
@@ -124,7 +130,7 @@ class MaxMinCorr(Method):
         self.neuron_sort = {}    
         # Sort neurons by worst (or best) best correlation with another neuron
         # in another network.
-        for network in tqdm(self.activations, desc='annotation'):
+        for network in tqdm(self.representations_d, desc='annotation'):
             self.neuron_sort[network] = sorted(
                 range(self.num_neurons[network]),
                 key = lambda i: -op(
@@ -138,7 +144,7 @@ class MaxMinCorr(Method):
 
         # For each network, created an "annotated sort"
         self.neuron_notated_sort = {}
-        for network in tqdm(self.activations, desc='write'):
+        for network in tqdm(self.representations_d, desc='write'):
             self.neuron_notated_sort[network] = [
                     (
                         neuron, 
@@ -155,23 +161,23 @@ class MaxMinCorr(Method):
 
 class MaxCorr(MaxMinCorr):
 
-    def __init__(self, embedding_files):
+    def __init__(self, representation_files):
 
-        super().__init__(embedding_files, max)
+        super().__init__(representation_files, max)
 
 
 class MinCorr(MaxMinCorr):
 
-    def __init__(self, embedding_files):
+    def __init__(self, representation_files):
 
-        super().__init__(embedding_files, min)
+        super().__init__(representation_files, min)
 
 
 class LinReg(Method):
 
-    def __init__(self, embedding_files):
+    def __init__(self, representation_files):
 
-        super().__init__(embedding_files)
+        super().__init__(representation_files)
 
 
     def compute_correlations(self):
@@ -179,26 +185,26 @@ class LinReg(Method):
         # Normalize to have mean 0 and standard devaition 1.
         means = {}
         stdevs = {}
-        for network in tqdm(self.activations, desc='mu, sigma'):
-            means[network] = self.activations[network].mean(0, keepdim=True)
+        for network in tqdm(self.representations_d, desc='mu, sigma'):
+            means[network] = self.representations_d[network].mean(0, keepdim=True)
             stdevs[network] = (
-                self.activations[network] - means[network].expand_as(self.activations[network])
+                self.representations_d[network] - means[network].expand_as(self.representations_d[network])
             ).pow(2).mean(0, keepdim=True).pow(0.5)
 
-            self.activations[network] = (self.activations[network] - means[network]) / stdevs[network]
+            self.representations_d[network] = (self.representations_d[network] - means[network]) / stdevs[network]
 
-        self.errors = {network: {} for network in self.activations}
+        self.errors = {network: {} for network in self.representations_d}
 
         # Get all correlation pairs
-        for network, other_network in tqdm(p(self.activations, self.activations), desc='correlate', total=len(self.activations)**2):
+        for network, other_network in tqdm(p(self.representations_d, self.representations_d), desc='correlate', total=len(self.representations_d)**2):
             # TODO: relax this, but be careful about the max (it will be self)
             # Don't match within one network
             if network == other_network:
                 continue
 
             # Try to predict this network given the other one
-            X = self.activations[other_network].clone()
-            Y = self.activations[network].clone()
+            X = self.representations_d[other_network].clone()
+            Y = self.representations_d[network].clone()
 
             # solve with ordinary least squares 
             coefs = X.t().mm(X).inverse().mm(X.t()).mm(Y)
@@ -211,7 +217,7 @@ class LinReg(Method):
         self.neuron_sort = {}
         # Sort neurons by best correlation (lowest regression error) with another network
         # in another network.
-        for network in tqdm(self.activations, desc='annotation'):
+        for network in tqdm(self.representations_d, desc='annotation'):
             self.neuron_sort[network] = sorted(
                 range(self.num_neurons[network]),
                 key = lambda i: max(
@@ -226,7 +232,7 @@ class LinReg(Method):
 
         self.neuron_notated_sort = {}
         # For each network, created an "annotated sort"
-        for network in tqdm(self.activations, desc='write'):
+        for network in tqdm(self.representations_d, desc='write'):
             # Annotate each neuron with its associated cluster
             self.neuron_notated_sort[network] = [
                 (
@@ -244,9 +250,9 @@ class LinReg(Method):
 
 class SVCCA(Method):
 
-    def __init__(self, embedding_files, percent_variance=0.99, normalize_dimensions=False):
+    def __init__(self, representation_files, percent_variance=0.99, normalize_dimensions=False):
 
-        super().__init__(embedding_files)
+        super().__init__(representation_files)
 
         # Percentage of variance to take in initial PCA
         self.percent_variance = percent_variance
@@ -258,14 +264,14 @@ class SVCCA(Method):
 
         # Whiten dimensions
         if self.normalize_dimensions:
-            for network in tqdm(self.activations, desc='mu, sigma'):
-                self.activations[network] -= self.activations[network].mean(0)
-                self.activations[network] /= self.activations[network].std(0)
+            for network in tqdm(self.representations_d, desc='mu, sigma'):
+                self.representations_d[network] -= self.representations_d[network].mean(0)
+                self.representations_d[network] /= self.representations_d[network].std(0)
 
         # PCA to get independent components
         whitening_transforms = {}
-        for network in tqdm(self.activations, desc='pca'):
-            X = self.activations[network]
+        for network in tqdm(self.representations_d, desc='pca'):
+            X = self.representations_d[network]
             covariance = torch.mm(X.t(), X) / (X.size()[0] - 1)
 
             e, v = torch.eig(covariance, eigenvectors = True)
@@ -291,11 +297,11 @@ class SVCCA(Method):
 
         # CCA to get shared space
         self.transforms = {}
-        for a, b in tqdm(p(self.activations, self.activations), desc = 'cca', total = len(self.activations) ** 2):
+        for a, b in tqdm(p(self.representations_d, self.representations_d), desc = 'cca', total = len(self.representations_d) ** 2):
             if a is b or (a, b) in self.transforms or (b, a) in self.transforms:
                 continue
 
-            X, Y = self.activations[a], self.activations[b]
+            X, Y = self.representations_d[a], self.representations_d[b]
 
             # Apply PCA transforms to get independent things
             X = torch.mm(X, whitening_transforms[a])
@@ -326,9 +332,9 @@ class SVCCA(Method):
 # https://debug-ml-iclr2019.github.io/cameraready/DebugML-19_paper_9.pdf
 class CKA(Method):
 
-    def __init__(self, embedding_files, normalize_dimensions=True):
+    def __init__(self, representation_files, normalize_dimensions=True):
 
-        super().__init__(embedding_files)
+        super().__init__(representation_files)
         self.normalize_dimensions = normalize_dimensions
 
 
@@ -336,18 +342,18 @@ class CKA(Method):
 
         # Whiten dimensions
         if self.normalize_dimensions:
-            for network in tqdm(self.activations, desc='mu, sigma'):
-                self.activations[network] -= self.activations[network].mean(0)
+            for network in tqdm(self.representations_d, desc='mu, sigma'):
+                self.representations_d[network] -= self.representations_d[network].mean(0)
                 # TODO: might not need to normalize, only center
-                self.activations[network] /= self.activations[network].std(0)
+                self.representations_d[network] /= self.representations_d[network].std(0)
 
         # CKA to get shared space
         self.similarities = {}
-        for a, b in tqdm(p(self.activations, self.activations), desc = 'cca', total = len(self.activations) ** 2):
+        for a, b in tqdm(p(self.representations_d, self.representations_d), desc = 'cca', total = len(self.representations_d) ** 2):
             if a is b or (a, b) in self.transforms or (b, a) in self.transforms:
                 continue
 
-            X, Y = self.activations[a], self.activations[b]        
+            X, Y = self.representations_d[a], self.representations_d[b]        
 
             self.similarities[a, b] = torch.norm(torch.mm(Y.t(), X), p='fro').pow(2) / ( 
                 torch.norm(torch.mm(X.t(), X), p='fro') * torch.norm(torch.mm(Y.to(), Y), p='fro')
