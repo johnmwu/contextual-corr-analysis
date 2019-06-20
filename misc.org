@@ -48,6 +48,12 @@
 - [ ] In the Method class, we provide the ability to specify how things are
   loaded (first half only, etc.). However, in the main.py script, these options
   are unavailable. Why is this?
+- [ ] For the Linear Regression method of correlation, why do we use MSE? I feel
+  like this biases toward neurons which have smaller activations. Suppose a
+  particular neuron, on 3 words, has activations [0.1, 0.2, -0.1], and another
+  has activations [10, 0, -10]. A "bad" linreg prediction of the first may have
+  a better MSE than a "good" linreg prediction of the second (determined by
+  R^2). I feel like ranking by R^2 makes more sense. 
 * Misc
 - As it is (Mon Jun 17 12:41:34 EDT 2019), the data will be loaded on each call
   of the script. As far as I can tell, the data loading is a significant portion
@@ -55,6 +61,7 @@
   later. *YB*: agree, especially since we may want to apply all correlation methods on the same data. 
 - Is there a reason why we need a "Method" class? Why can't everything be
   unrolled into a single, large script? *YB*: eventually, we may want to call these from another program (e.g., NeuroX) so having a separate file for defining the methods which is different from where they are called would be useful. 
+- Maybe clean up the comments at some point (look more professional). 
 
 * Progress update
 ** Fri Jun 14 14:53:49 EDT 2019
