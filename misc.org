@@ -17,7 +17,7 @@
   half is the backward ENN representations. In practice, they are often
   concatenated and treated together, but having the option to separate them is
   useful.
-- [ ] What does the following line of code mean:
+- [X] What does the following line of code mean:
   #+BEGIN_SRC python
     activations = torch.cat([torch.stack([torch.cat(token) for token in sentence])
                              for sentence in activations]).cpu() 
@@ -43,17 +43,28 @@
   different neurons, no? See cell 15 of the hnb. Of course, what I did gets rid
   of the information regarding what sentence a particular representation came
   from.
+
+  Ok, as of Mon Jun 24 17:16:49 EDT 2019, we're deleting this. 
 - [ ] Mon Jun 17 14:14:52 EDT 2019 Style wise, is everything ok? 
    Answer for the the updated =load_embeddings= function
-- [ ] In the Method class, we provide the ability to specify how things are
+- [X] In the Method class, we provide the ability to specify how things are
   loaded (first half only, etc.). However, in the main.py script, these options
   are unavailable. Why is this?
-- [ ] For the Linear Regression method of correlation, why do we use MSE? I feel
+- [X] For the Linear Regression method of correlation, why do we use MSE? I feel
   like this biases toward neurons which have smaller activations. Suppose a
   particular neuron, on 3 words, has activations [0.1, 0.2, -0.1], and another
   has activations [10, 0, -10]. A "bad" linreg prediction of the first may have
   a better MSE than a "good" linreg prediction of the second (determined by
   R^2). I feel like ranking by R^2 makes more sense. 
+
+  Ok, it's resolved. 
+- [ ] For Linear Regression, there's a bias. 
+
+  Specifically, it's easier to fit a model with more neurons to any given other
+  model. In general, the fitting a 1000 neuron model will have a lower MSE than
+  fitting a 100 neuron model to a given set of activations. Thus, when we take
+  maximums of the MSE, it could be that most of them are fitting from one
+  specific other model. 
 * Misc
 - As it is (Mon Jun 17 12:41:34 EDT 2019), the data will be loaded on each call
   of the script. As far as I can tell, the data loading is a significant portion
