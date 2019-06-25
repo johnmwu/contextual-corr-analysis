@@ -65,6 +65,18 @@
   fitting a 100 neuron model to a given set of activations. Thus, when we take
   maximums of the MSE, it could be that most of them are fitting from one
   specific other model. 
+- [ ] In SVCCA, how to sort?
+
+  It seems we are writing down the transformation matrices. Ultimately though,
+  don't we need to order some things by importance? Sort the svcca directions,
+  or something? The SVCCA paper mentions an "svcca score". Is this what we will use?
+- [ ] What does it mean to be "centered"? 
+
+  This is mentioned in the cka paper. They don't make it clear whether it means
+  that we are centered for each neuron, or that we are centered for each
+  representation. I think it means the former (makes more sense, simpler), but
+  idk.
+- [ ] Can we change calls to torch.mm to the =@= operator?
 * Misc
 - As it is (Mon Jun 17 12:41:34 EDT 2019), the data will be loaded on each call
   of the script. As far as I can tell, the data loading is a significant portion
@@ -73,6 +85,7 @@
 - Is there a reason why we need a "Method" class? Why can't everything be
   unrolled into a single, large script? *YB*: eventually, we may want to call these from another program (e.g., NeuroX) so having a separate file for defining the methods which is different from where they are called would be useful. 
 - Maybe clean up the comments at some point (look more professional). 
+- In the CKA paper, they suggest different kernels. 
 
 * Progress update
 ** Fri Jun 14 14:53:49 EDT 2019

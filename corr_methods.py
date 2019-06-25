@@ -331,36 +331,47 @@ class SVCCA(Method):
 
 # https://debug-ml-iclr2019.github.io/cameraready/DebugML-19_paper_9.pdf
 class CKA(Method):
-
     def __init__(self, representation_files, normalize_dimensions=True):
-
         super().__init__(representation_files)
         self.normalize_dimensions = normalize_dimensions
 
-
     def compute_correlations(self):
-
-        # Whiten dimensions
+        """
+        Set `self.similarities`. 
+        """
+        # Normalize
         if self.normalize_dimensions:
             for network in tqdm(self.representations_d, desc='mu, sigma'):
-                self.representations_d[network] -= self.representations_d[network].mean(0)
                 # TODO: might not need to normalize, only center
-                self.representations_d[network] /= self.representations_d[network].std(0)
+                t = self.representations_d[network]
+                means = t.mean(0, keepdim=True)
+                stdevs = t.std(0, keepdim=True)
 
-        # CKA to get shared space
-        self.similarities = {}
-        for a, b in tqdm(p(self.representations_d, self.representations_d), desc = 'cca', total = len(self.representations_d) ** 2):
-            if a is b or (a, b) in self.transforms or (b, a) in self.transforms:
+                self.representations_d[network] = (t - means) / stdevs
+
+        # Set `self.similarities`
+        # {network: {other: cka_similarity}}
+        self.similarities = {network: {} for network in self.representations_d}
+        for network, other_network in tqdm(p(self.representations_d,
+                                             self.representations_d), desc='cka',
+                                           total=len(self.representations_d)**2):
+
+            if network == other_network:
                 continue
 
-            X, Y = self.representations_d[a], self.representations_d[b]        
+            if other_network in self.similarities[network].keys(): # TO DO: optimize?
+                continue
 
-            self.similarities[a, b] = torch.norm(torch.mm(Y.t(), X), p='fro').pow(2) / ( 
-                torch.norm(torch.mm(X.t(), X), p='fro') * torch.norm(torch.mm(Y.to(), Y), p='fro')
-                )
+            X = self.representations_d[network]
+            Y = self.representations_d[other_network]
 
+            XtX_F = torch.norm(torch.mm(X.t(), X), p='fro').item()
+            YtY_F = torch.norm(torch.mm(Y.t(), Y), p='fro').item()
+            YtX_F = torch.norm(torch.mm(Y.t(), X), p='fro').item()
+
+            # eq 5 in paper
+            self.similarities[network][other_network] = YtX_F**2 / (XtX_F*YtY_F)
 
     def write_correlations(self, output_file):
-
         torch.save(self.transforms, output_file)
 
