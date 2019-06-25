@@ -92,7 +92,13 @@
   For instance, we compute a whole ton of intermediate quantities:
   =self.clusters=, =self.neuron_sort=. Do we need these? If our goal is only to
   create the object =self.neuron_notated_sort=, it can be done much cleaner. 
-
+- Papers read
+  - Identifying and Controlling Important Neurons.. 
+  - Neural Machine Translation by Jointly Learning... (attn)
+  - Similarity of Neural Network Representations Revisited (cka)
+  - Deep Contextualized word representations (elmo)
+  - Sequence to sequence learning with neural networks 
+  - SVCCA: Singular Vector Canonical .. 
 * Progress update
 ** Fri Jun 14 14:53:49 EDT 2019
 In emacs org-mode, there should be a way to set it up so that when tasks are
