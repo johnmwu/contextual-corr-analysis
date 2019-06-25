@@ -192,13 +192,14 @@ class LinReg(Method):
 
     def compute_correlations(self):
         # Set `means_d`, `stdevs_d`, normalize to mean 0 std 1
+        # Not exactly sure why we compute `means_d`
         means_d = {}
         stdevs_d = {}
 
         for network in tqdm(self.representations_d, desc='mu, sigma'):
             t = self.representations_d[network]
             means = t.mean(0, keepdim=True)
-            stdevs = (t - means).pow(2).mean(0, keepdim=True).pow(0.5)
+            stdevs = t.std(0, keepdim=True)
 
             means_d[network] = means
             stdevs_d[network] = stdevs
@@ -219,6 +220,10 @@ class LinReg(Method):
             # solve with ordinary least squares 
             error = np.linalg.lstsq(X, Y, rcond=None)[1] # TO DO: don't use numpy, or at least use CUDA
             # Possibilities are use torch (torch.svd or smth), or use another library (cupy)
+
+            # Note: what was here previously is very numerically
+            # unstable. Linear regression should be performed using either QR or
+            # the SVD (which are numerically stable computations). 
             if len(error) == 0:
                 raise ValueError('np.linalg.lstsq returned errors of len 0 for
                 input\nX: ' + str(X) + '\nY: ' + str(Y)) 
@@ -241,7 +246,6 @@ class LinReg(Method):
 
 
     def write_correlations(self, output_file):
-
         self.neuron_notated_sort = {}
         # For each network, created an "annotated sort"
         for network in tqdm(self.representations_d, desc='write'):
@@ -268,70 +272,60 @@ class SVCCA(Method):
         self.normalize_dimensions = normalize_dimensions
 
     def compute_correlations(self):
-        # Whiten dimensions
+        """
+        Set `self.transforms` to be the svcca transform matrix M. 
+
+        If X is the activation tensor, then X M is the svcca tensor. 
+        """
+        # Normalize
         if self.normalize_dimensions:
             for network in tqdm(self.representations_d, desc='mu, sigma'):
-                self.representations_d[network] -= self.representations_d[network].mean(0)
-                self.representations_d[network] /= self.representations_d[network].std(0)
+                t = self.representations_d[network]
+                means = t.mean(0, keepdim=True)
+                stdevs = t.std(0, keepdim=True)
 
-        # PCA to get independent components
-        whitening_transforms = {}
+                self.representations_d[network] = (t - means) / stdevs
+
+        # Set `whitening_transforms`, `pca_directions`
+        whitening_transforms = {} # {network: whitening_tensor}
+        pca_directions = {} 
         for network in tqdm(self.representations_d, desc='pca'):
             X = self.representations_d[network]
-            covariance = torch.mm(X.t(), X) / (X.size()[0] - 1)
+            U, S, V = torch.svd(X)
 
-            e, v = torch.eig(covariance, eigenvectors = True)
-
-            # Sort by eigenvector magnitude
-            magnitudes, indices = torch.sort(torch.abs(e[:, 0]), dim = 0, descending = True)
-            se, sv = e[:, 0][indices], v.t()[indices].t()
-
-            # Figure out how many dimensions account for 99% of the variance
-            var_sums = torch.cumsum(se, 0)
-            wanted_size = torch.sum(var_sums.lt(var_sums[-1] * args.percent_variance))
+            var_sums = torch.cumsum(S.pow(2), 0)
+            wanted_size = torch.sum(var_sums.lt(var_sums[-1] * self.percent_variance)).item()
 
             print('For network', network, 'wanted size is', wanted_size)
 
-            # This matrix has size (dim) x (dim)
-            whitening_transform = torch.mm(sv, torch.diag(se ** -0.5))
-
-            # We wish to cut it down to (dim) x (wanted_size)
+            whitening_transform = torch.mm(V, torch.diag(1/S))
             whitening_transforms[network] = whitening_transform[:, :wanted_size]
+            pca_directions[network] = U[:, :wanted_size]
 
-            #print(covariance[:10, :10])
-            #print(torch.mm(whitening_transforms[network], whitening_transforms[network].t())[:10, :10])
+        # Set `self.transforms` to be {network: {other: svcca_transform}}
+        self.transforms = {network: {} for network in self.representations_d}
+        for network, other_network in tqdm(p(self.representations_d,
+                                             self.representations_d), desc='cca',
+                                           total=len(self.representations_d)**2):
 
-        # CCA to get shared space
-        self.transforms = {}
-        for a, b in tqdm(p(self.representations_d, self.representations_d), desc = 'cca', total = len(self.representations_d) ** 2):
-            if a is b or (a, b) in self.transforms or (b, a) in self.transforms:
+            if network == other_network:
                 continue
 
-            X, Y = self.representations_d[a], self.representations_d[b]
+            if other_network in self.transforms[network].keys(): # TO DO: optimize?
+                continue
 
-            # Apply PCA transforms to get independent things
-            X = torch.mm(X, whitening_transforms[a])
-            Y = torch.mm(Y, whitening_transforms[b])
-
-            # Get a correlation matrix
-            correlation_matrix = torch.mm(X.t(), Y) / (X.size()[0] - 1)
+            X = pca_directions[network]
+            Y = pca_directions[other_network]
 
             # Perform SVD for CCA.
             # u s vt = Xt Y
             # s = ut Xt Y v
-            u, s, v = torch.svd(correlation_matrix)
+            u, s, v = torch.svd(torch.mm(X.t(), Y))
 
-            X = torch.mm(X, u).cpu()
-            Y = torch.mm(Y, v).cpu()
-
-            self.transforms[a, b] = {
-                a: whitening_transforms[a].mm(u),
-                b: whitening_transforms[b].mm(v)
-            }
-
+            self.transforms[network][other_network] = torch.mm(whitening_transforms[network], u)
+            self.transforms[other_network][network] = torch.mm(whitening_transforms[other_network], v)
 
     def write_correlations(self, output_file):
-
         torch.save(self.transforms, output_file)
 
 
