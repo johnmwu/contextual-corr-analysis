@@ -150,8 +150,10 @@ class MaxMinCorr(Method):
 
 
     def write_correlations(self, output_file):
+        """
+        Create `self.neuron_notated_sort`, and write it to output_file. 
+        """
 
-        # For each network, created an "annotated sort"
         self.neuron_notated_sort = {}
         for network in tqdm(self.representations_d, desc='write'):
             self.neuron_notated_sort[network] = [
@@ -165,7 +167,8 @@ class MaxMinCorr(Method):
                     )
                     for neuron in self.neuron_sort[network]
                 ]
-        json.dump(neuron_notated_sort, open(output_file, 'w'), indent = 4)
+
+        json.dump(self.neuron_notated_sort, open(output_file, "w"), indent=4)
 
 
 class MaxCorr(MaxMinCorr):
@@ -191,6 +194,10 @@ class LinReg(Method):
         super().__init__(representation_files)
 
     def compute_correlations(self):
+        """
+        Set `self.neuron_sort`. 
+        """
+
         # Set `means_d`, `stdevs_d`, normalize to mean 0 std 1
         # Not exactly sure why we compute `means_d`
         means_d = {}
@@ -207,6 +214,7 @@ class LinReg(Method):
 
         # Set `self.errors`
         # {network: {other: error_tensor}}
+        self.errors = {network: {} for network in self.representations_d}
         for network, other_network in tqdm(p(self.representations_d,
                                              self.representations_d), desc='correlate',
                                            total=len(self.representations_d)**2):
@@ -225,8 +233,7 @@ class LinReg(Method):
             # unstable. Linear regression should be performed using either QR or
             # the SVD (which are numerically stable computations). 
             if len(error) == 0:
-                raise ValueError('np.linalg.lstsq returned errors of len 0 for
-                input\nX: ' + str(X) + '\nY: ' + str(Y)) 
+                raise ValueError
             error = torch.from_numpy(error)
 
             self.errors[network][other_network] = error
@@ -244,24 +251,21 @@ class LinReg(Method):
                 )
             )
 
-
     def write_correlations(self, output_file):
         self.neuron_notated_sort = {}
-        # For each network, created an "annotated sort"
         for network in tqdm(self.representations_d, desc='write'):
-            # Annotate each neuron with its associated cluster
             self.neuron_notated_sort[network] = [
                 (
                     neuron,
                     {
-                        other: self.errors[network][other][neuron]
+                        other: float(self.errors[network][other][neuron])
                         for other in self.errors[network]
                     }
                 )
                 for neuron in self.neuron_sort[network]
             ]
 
-        json.dump(self.neuron_notated_sort, open(output_file, 'w'), indent = 4)
+        json.dump(self.neuron_notated_sort, open(output_file, 'w'), indent=4)
 
 
 class SVCCA(Method):
@@ -276,7 +280,7 @@ class SVCCA(Method):
         Set `self.transforms` to be the svcca transform matrix M. 
 
         If X is the activation tensor, then X M is the svcca tensor. 
-        """
+        """ 
         # Normalize
         if self.normalize_dimensions:
             for network in tqdm(self.representations_d, desc='mu, sigma'):
@@ -373,5 +377,5 @@ class CKA(Method):
             self.similarities[network][other_network] = YtX_F**2 / (XtX_F*YtY_F)
 
     def write_correlations(self, output_file):
-        torch.save(self.transforms, output_file)
+        torch.save(self.similarities, output_file)
 

@@ -77,6 +77,7 @@
   representation. I think it means the former (makes more sense, simpler), but
   idk.
 - [ ] Can we change calls to torch.mm to the =@= operator?
+- [ ] Not a problem, but why are some saves json, and others =torch.save=?
 * Misc
 - As it is (Mon Jun 17 12:41:34 EDT 2019), the data will be loaded on each call
   of the script. As far as I can tell, the data loading is a significant portion
@@ -86,6 +87,11 @@
   unrolled into a single, large script? *YB*: eventually, we may want to call these from another program (e.g., NeuroX) so having a separate file for defining the methods which is different from where they are called would be useful. 
 - Maybe clean up the comments at some point (look more professional). 
 - In the CKA paper, they suggest different kernels. 
+- MaxMinCorr is very inelegantly programmed. Maybe change at some point. 
+
+  For instance, we compute a whole ton of intermediate quantities:
+  =self.clusters=, =self.neuron_sort=. Do we need these? If our goal is only to
+  create the object =self.neuron_notated_sort=, it can be done much cleaner. 
 
 * Progress update
 ** Fri Jun 14 14:53:49 EDT 2019
@@ -117,3 +123,14 @@ used.
 
 By the way, I heard you telling Jim that your brother is getting married. Have a
 good time!
+** Tue Jun 25 15:34:54 EDT 2019
+Just finished coding the `compute_correlations` for everything. Last week, I
+again spent a lot of time (3-4 out of 5 days) reading papers. 
+
+Estimated that I'd finish the script by last week. Looks like that'll be today,
+as the write_correlations method is not complex. May add some unit tests,
+although I'm reasonably confident in correctness (from the helper
+notebooks). Please have a brief glance. 
+
+Please let me know what you want me to do next. Should I now attempt to run the
+code on the files you gave me? How should I go about doing this?
