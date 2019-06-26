@@ -5,6 +5,56 @@ import json
 import numpy as np
 import h5py
 
+def load_representations(representation_fname_l, limit=None, layer=None,
+                         first_half_only=False, second_half_only=False):
+    """
+    Load data. Returns `num_neurons_d` and `representations_d`. 
+    """
+
+    num_neurons_d = {} # {fname: num_neurons} : {str: int}
+    representations_d = {} # {fname: representations} : {str: tensor}
+
+    for fname in tqdm(representation_fname_l, desc='loading'):
+        # this (the formatting) follows contexteval:
+        # https://github.com/nelson-liu/contextual-repr-analysis/blob/master/contexteval/contextualizers/precomputed_contextualizer.py
+        # Create `activations_h5`, `sentence_d`, `indices`
+        activations_h5 = h5py.File(fname)
+        sentence_d = json.loads(activations_h5['sentence_to_index'][0])
+        temp = {}
+        for k, v in sentence_d.items():
+            temp[v] = k
+        sentence_d = temp # {str ix, sentence}
+        indices = list(sentence_d.keys())[:limit]
+
+        # Create `representations_l`
+        representations_l = []
+        for sentence_ix in indices: 
+            # Create `activations`
+            activations = torch.FloatTensor(activations_h5[sentence_ix])
+            if not (activations.dim() == 2 or activations.dim() == 3):
+                raise ValueError('Improper array dimension in file: ' + fname +
+                                 "\nShape: " + str(activations.shape))
+
+            # Create `representations`
+            representations = activations
+            if activations.dim() == 3:
+                if layer is not None: 
+                    representations = activations[layer] 
+                else:
+                    # use the top layer by default
+                    representations = activations[-1]
+            if first_half_only: 
+                representations = torch.chunk(representations, chunks=2, dim=-1)[0]
+            elif second_half_only:
+                representations = torch.chunk(representations, chunks=2, dim=-1)[1]
+
+            representations_l.append(representations)
+
+        num_neurons_d[fname] = representations_l[0].size()[1]
+        representations_d[fname] = torch.cat(representations_l) # TO DO: .cpu()?
+
+    return (num_neurons_d, representations_d)
+
 
 class Method(object):
     """
@@ -12,60 +62,9 @@ class Method(object):
 
     Example instances are MaxCorr, MinCorr, LinReg, SVCCA, CKA. 
     """
-    def __init__(self, representation_files, layer=None, first_half_only=False,
-                 second_half_only=False):
-        self.representation_files = [line.strip() for line in representation_files]
-        self.first_half_only = first_half_only
-        self.second_half_only = second_half_only
-
-    def load_representations(self, limit=None):
-        """
-        Load data. 
-
-        Set `self.num_neurons_d` and `self.representations_d`. 
-        """
-
-        self.num_neurons_d = {}
-        self.representations_d = {}
-
-        for fname in tqdm(representation_files, desc='loading'):
-            # this (the formatting) follows contexteval:
-            # https://github.com/nelson-liu/contextual-repr-analysis/blob/master/contexteval/contextualizers/precomputed_contextualizer.py
-            # Create `activations_h5`, `sentence_d`, `indices`
-            activations_h5 = h5py.File(fname)
-            sentence_d = json.loads(activations_h5['sentence_to_index'][0])
-            temp = {}
-            for k, v in sentence_d.items():
-                temp[v] = k
-            sentence_d = temp # {str ix, sentence}
-            indices = list(sentence_d.keys())[:limit]
-
-            # Create `representations_l`
-            representations_l = []
-            for sentence_ix in indices: 
-                # Create `activations`
-                activations = torch.FloatTensor(activations_h5[sentence_ix])
-                if not (activations.dim() == 2 or activations.dim() == 3):
-                    raise ValueError('Improper array dimension in file: ' + fname +
-                                     "\nShape: " + str(activations.shape))
-
-                # Create `representations`
-                representations = activations
-                if activations.dim() == 3:
-                    if self.layer is not None: 
-                        representations = activations[self.layer] 
-                    else:
-                        # use the top layer by default
-                        representations = activations[-1]
-                if self.first_half_only: 
-                    representations = torch.chunk(representations, chunks=2, dim=-1)[0]
-                elif self.second_half_only:
-                    representations = torch.chunk(representations, chunks=2, dim=-1)[1]
-
-                representations_l.append(representations)
-
-            self.num_neurons_d[fname] = representations_l[0].size()[1]
-            self.representations_d[fname] = torch.cat(representations_l) # TO DO: .cpu()?
+    def __init__(self, num_neurons_d, representations_d):
+        self.num_neurons_d = num_neurons_d
+        self.representations_d = representations_d
 
     def compute_correlations(self):
         raise NotImplementedError
@@ -75,13 +74,17 @@ class Method(object):
 
 
 class MaxMinCorr(Method):
-    def __init__(self, representation_files):
-        super().__init__(representation_files)
+    def __init__(self, num_neurons_d, representations_d, op=None):
+        super().__init__(num_neurons_d, representations_d)
+        self.op = op
 
-    def compute_correlations(self, op):
+    def compute_correlations(self):
         """
         Set `self.correlations`, `self.clusters`, `self.neuron_sort`. 
         """
+
+        if self.op is None:
+            raise ValueError('self.op not set in MaxMinCorr')
 
         # Set `means_d`, `stdevs_d`
         means_d = {}
@@ -142,7 +145,7 @@ class MaxMinCorr(Method):
         for network in tqdm(self.representations_d, desc='annotation'):
             self.neuron_sort[network] = sorted(
                 range(self.num_neurons_d[network]),
-                key = lambda i : op(
+                key = lambda i : self.op(
                     abs(self.correlations[network][other][i][self.clusters[network][i][other]])
                     for other in self.clusters[network][i]),
                 reverse=True
@@ -173,25 +176,30 @@ class MaxMinCorr(Method):
 
 class MaxCorr(MaxMinCorr):
     # TO DO: test (I don't think it's wrong, though)
-    def __init__(self, representation_files):
-        super().__init__(representation_files)
+    def __init__(self, num_neurons_d, representations_d):
+        super().__init__(num_neurons_d, representations_d, op=max)
 
     def compute_correlations(self):
-        super().compute_correlations(max)
+        super().compute_correlations()
+
+    def __str__(self):
+        return "maxcorr"
 
 
 class MinCorr(MaxMinCorr):
     # TO DO: test (I don't think it's wrong, though)
-    def __init__(self, representation_files):
-        super().__init__(representation_files)
+    def __init__(self, num_neurons_d, representations_d):
+        super().__init__(num_neurons_d, representations_d, op=min)
 
     def compute_correlations(self):
-        super().compute_correlations(min)
+        super().compute_correlations()
 
+    def __str__(self):
+        return "mincorr"
 
-class LinReg(Method):
-    def __init__(self, representation_files):
-        super().__init__(representation_files)
+class LinReg(Method): 
+    def __init__(self, num_neurons_d, representations_d):
+        super().__init__(num_neurons_d, representations_d)
 
     def compute_correlations(self):
         """
@@ -267,10 +275,13 @@ class LinReg(Method):
 
         json.dump(self.neuron_notated_sort, open(output_file, 'w'), indent=4)
 
+    def __str__(self):
+        return "linreg"
 
 class SVCCA(Method):
-    def __init__(self, representation_files, percent_variance=0.99, normalize_dimensions=False):
-        super().__init__(representation_files)
+    def __init__(self, num_neurons_d, representations_d, percent_variance=0.99,
+                 normalize_dimensions=False):
+        super().__init__(num_neurons_d, representations_d)
 
         self.percent_variance = percent_variance
         self.normalize_dimensions = normalize_dimensions
@@ -332,11 +343,14 @@ class SVCCA(Method):
     def write_correlations(self, output_file):
         torch.save(self.transforms, output_file)
 
+    def __str__(self):
+        return "svcca"
 
 # https://debug-ml-iclr2019.github.io/cameraready/DebugML-19_paper_9.pdf
 class CKA(Method):
-    def __init__(self, representation_files, normalize_dimensions=True):
-        super().__init__(representation_files)
+    def __init__(self, num_neurons_d, representations_d,
+                 normalize_dimensions=True):
+        super().__init__(num_neurons_d, representations_d)
         self.normalize_dimensions = normalize_dimensions
 
     def compute_correlations(self):
@@ -379,3 +393,6 @@ class CKA(Method):
     def write_correlations(self, output_file):
         torch.save(self.similarities, output_file)
 
+    def __str__(self):
+        return "cka"
+        
