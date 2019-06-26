@@ -17,22 +17,17 @@ Options:
 """
 
 from docopt import docopt
-import numpy as np
-import json
-import os 
-import torch
-from itertools import product as p
-from tqdm import tqdm
-from corr_methods import load_representations, MaxCorr, MinCorr, LinReg, SVCCA, CKA
 
 def main(method, representation_files, output_file):
+    from corr_methods import load_representations, MaxCorr, MinCorr, LinReg, SVCCA, CKA
+
     with open(representation_files) as f:
         representation_fname_l = [line.strip() for line in f]
 
     print("Loading representations")
     num_neurons_d, representations_d = load_representations(representation_fname_l)
     
-    print('Initializing method ' + method) 
+    print('\nInitializing method ' + method) 
     if method == 'all':
         methods = [
             MaxCorr(num_neurons_d, representations_d),
@@ -54,15 +49,15 @@ def main(method, representation_files, output_file):
     else:
         raise Exception('Unknown method: ' + method)
 
-    print('Computing correlations')
+    print('\nComputing correlations')
     for method in methods:
         print('For method: ', str(method))
         method.compute_correlations()
 
-    print('Writing correlations')
+    print('\nWriting correlations')
     for method in methods:
         print('For method: ', str(method))
-        out_fname = str(method) + output_file if len(methods) > 1 else output_file
+        out_fname = str(method) + '_' + output_file if len(methods) > 1 else output_file
 
         method.write_correlations(out_fname)
 

@@ -11,8 +11,14 @@ Files
 - misc.org
   Default case for relevant information. Contains the weekly updates. 
 
-- *_hnb.ipynb
-  "Helper notebook." These files are to 
+- hnb
+  "Helper notebook." Files in this directory are to
   - help me code
   - help the reader understand
   the resulting .py files. 
+
+- slurm
+  SLURM scripts. 
+
+- tests
+  Testing correctness. 

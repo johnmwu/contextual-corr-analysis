@@ -18,7 +18,7 @@ def load_representations(representation_fname_l, limit=None, layer=None,
         # this (the formatting) follows contexteval:
         # https://github.com/nelson-liu/contextual-repr-analysis/blob/master/contexteval/contextualizers/precomputed_contextualizer.py
         # Create `activations_h5`, `sentence_d`, `indices`
-        activations_h5 = h5py.File(fname)
+        activations_h5 = h5py.File(fname, 'r')
         sentence_d = json.loads(activations_h5['sentence_to_index'][0])
         temp = {}
         for k, v in sentence_d.items():
