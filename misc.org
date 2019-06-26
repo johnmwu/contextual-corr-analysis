@@ -78,6 +78,9 @@
   idk.
 - [ ] Can we change calls to torch.mm to the =@= operator?
 - [ ] Not a problem, but why are some saves json, and others =torch.save=?
+- [ ] When scheduling SLURM jobs, how to specify that a GPU should be used?
+  Will PyTorch tensor operations automatically use the GPU if one is available?
+  If not, then should I add this default to the code?
 * Misc
 - [X] As it is (Mon Jun 17 12:41:34 EDT 2019), the data will be loaded on each
   call of the script. As far as I can tell, the data loading is a significant
