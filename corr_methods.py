@@ -9,14 +9,38 @@ def load_representations(representation_fname_l, limit=None, layer=None,
                          first_half_only=False, second_half_only=False):
     """
     Load data. Returns `num_neurons_d` and `representations_d`. 
+
+    Parameters
+    ----
+    representation_fname_l : list<str>
+        List of filenames. 
+    limit : int or NoneType
+        Cap on the number of data points. None if no cap. 
+    layer : int or NoneType
+        Layer to correlate. None if the top layer. 
+
+        Currently (d1c0249), you are forced to always correlate the same
+        layer of each model.
+    first_half_only : bool
+        Only use the first half of the neurons.
+    second_half_only : bool
+        Only use the second half of the neurons. 
+
+    Returns
+    ----
+    num_neurons_d : dict<str, int>
+        Dict of {fname : num_neurons}
+    representations_d : dict<str, tensor>
+        Dict of {fname : (len_data, num_neurons) tensor}. The tensor
+        contains the activations for a given model on each input data
+        point. 
     """
+    num_neurons_d = {} 
+    representations_d = {} 
 
-    num_neurons_d = {} # {fname: num_neurons} : {str: int}
-    representations_d = {} # {fname: representations} : {str: tensor}
-
+    # formatting follows contexteval:
+    # https://github.com/nelson-liu/contextual-repr-analysis/blob/master/contexteval/contextualizers/precomputed_contextualizer.py
     for fname in tqdm(representation_fname_l, desc='loading'):
-        # this (the formatting) follows contexteval:
-        # https://github.com/nelson-liu/contextual-repr-analysis/blob/master/contexteval/contextualizers/precomputed_contextualizer.py
         # Create `activations_h5`, `sentence_d`, `indices`
         activations_h5 = h5py.File(fname, 'r')
         sentence_d = json.loads(activations_h5['sentence_to_index'][0])
@@ -32,8 +56,9 @@ def load_representations(representation_fname_l, limit=None, layer=None,
             # Create `activations`
             activations = torch.FloatTensor(activations_h5[sentence_ix])
             if not (activations.dim() == 2 or activations.dim() == 3):
-                raise ValueError('Improper array dimension in file: ' + fname +
-                                 "\nShape: " + str(activations.shape))
+                raise ValueError('Improper array dimension in file: ' +
+                                 fname + "\nShape: " +
+                                 str(activations.shape))
 
             # Create `representations`
             representations = activations
@@ -44,9 +69,11 @@ def load_representations(representation_fname_l, limit=None, layer=None,
                     # use the top layer by default
                     representations = activations[-1]
             if first_half_only: 
-                representations = torch.chunk(representations, chunks=2, dim=-1)[0]
+                representations = torch.chunk(representations, chunks=2,
+                                              dim=-1)[0]
             elif second_half_only:
-                representations = torch.chunk(representations, chunks=2, dim=-1)[1]
+                representations = torch.chunk(representations, chunks=2,
+                                              dim=-1)[1]
 
             representations_l.append(representations)
 
@@ -97,17 +124,18 @@ class MaxMinCorr(Method):
 
         # Set `self.correlations`
         # {network: {other: tensor}}
-        self.correlations = {network: {} for network in self.representations_d}
-        num_words = list(self.representations_d.values())[0].size()[0] # TO DO: make more elegant
+        self.correlations = {network: {} for network in
+                             self.representations_d}
+        num_words = next(iter(self.representations_d.values())).size()[0]
 
         for network, other_network in tqdm(p(self.representations_d,
                                              self.representations_d),
-                                           desc='correlate',
-                                           total=len(self.representations_d)**2):
+                                             desc='correlate',
+                                             total=len(self.representations_d)**2):
             if network == other_network:
                 continue
 
-            if other_network in self.correlations[network].keys(): # TO DO: optimize?
+            if other_network in self.correlations[network]: 
                 continue
 
             t1 = self.representations_d[network] # "tensor"
@@ -133,23 +161,20 @@ class MaxMinCorr(Method):
             for neuron in range(self.num_neurons_d[network]): 
                 self.clusters[network][neuron] = {
                     other : max(range(self.num_neurons_d[other]),
-                                key = lambda i: abs(self.correlations[network][other][neuron][i])) 
-                     for other in self.correlations[network]
+                                key=lambda i:
+                                abs(self.correlations[network][other][neuron][i]))
+                    for other in self.correlations[network]
                 }
 
         # Set `self.neuron_sort`
         # {network, sorted_list}
         self.neuron_sort = {} 
-        # Sort neurons by worst (or best) best correlation with another neuron
-        # in another network.
         for network in tqdm(self.representations_d, desc='annotation'):
             self.neuron_sort[network] = sorted(
-                range(self.num_neurons_d[network]),
-                key = lambda i : self.op(
+                range(self.num_neurons_d[network]), key=lambda i :
+                self.op(
                     abs(self.correlations[network][other][i][self.clusters[network][i][other]])
-                    for other in self.clusters[network][i]),
-                reverse=True
-            )
+                    for other in self.clusters[network][i]), reverse=True )
 
 
     def write_correlations(self, output_file):
@@ -175,7 +200,6 @@ class MaxMinCorr(Method):
 
 
 class MaxCorr(MaxMinCorr):
-    # TO DO: test (I don't think it's wrong, though)
     def __init__(self, num_neurons_d, representations_d):
         super().__init__(num_neurons_d, representations_d, op=max)
 
@@ -187,7 +211,6 @@ class MaxCorr(MaxMinCorr):
 
 
 class MinCorr(MaxMinCorr):
-    # TO DO: test (I don't think it's wrong, though)
     def __init__(self, num_neurons_d, representations_d):
         super().__init__(num_neurons_d, representations_d, op=min)
 
@@ -197,6 +220,7 @@ class MinCorr(MaxMinCorr):
     def __str__(self):
         return "mincorr"
 
+
 class LinReg(Method): 
     def __init__(self, num_neurons_d, representations_d):
         super().__init__(num_neurons_d, representations_d)
@@ -205,59 +229,54 @@ class LinReg(Method):
         """
         Set `self.neuron_sort`. 
         """
-
         # Set `means_d`, `stdevs_d`, normalize to mean 0 std 1
-        # Not exactly sure why we compute `means_d`
         means_d = {}
         stdevs_d = {}
 
         for network in tqdm(self.representations_d, desc='mu, sigma'):
             t = self.representations_d[network]
             means = t.mean(0, keepdim=True)
-            stdevs = t.std(0, keepdim=True)
+            stdevs = (t - means).pow(2).mean(0, keepdim=True).pow(0.5)
 
             means_d[network] = means
             stdevs_d[network] = stdevs
             self.representations_d[network] = (t - means) / stdevs
 
-        # Set `self.errors`
-        # {network: {other: error_tensor}}
-        self.errors = {network: {} for network in self.representations_d}
+        # Set `self.pred_power`
+        # If the data is centered, it is the r value. 
         for network, other_network in tqdm(p(self.representations_d,
-                                             self.representations_d), desc='correlate',
+                                             self.representations_d),
+                                           desc='correlate',
                                            total=len(self.representations_d)**2):
+
             if network == other_network:
                 continue
 
-            # Try to predict this network given the other one
-            X = self.representations_d[other_network].cpu().numpy()
-            Y = self.representations_d[network].cpu().numpy()
+            X = self.representations_d[other_network]
+            Y = self.representations_d[network]
 
-            # solve with ordinary least squares 
-            error = np.linalg.lstsq(X, Y, rcond=None)[1] # TO DO: don't use numpy, or at least use CUDA
-            # Possibilities are use torch (torch.svd or smth), or use another library (cupy)
+            # SVD method of linreg
+            U, S, V = torch.svd(X) 
+            UtY = torch.mm(U.t(), Y) # b for Ub = Y
 
-            # Note: what was here previously is very numerically
-            # unstable. Linear regression should be performed using either QR or
-            # the SVD (which are numerically stable computations). 
-            if len(error) == 0:
-                raise ValueError
-            error = torch.from_numpy(error)
+            bnorms = torch.norm(UtY, dim=0)
+            ynorms = torch.norm(Y, dim=0)
 
-            self.errors[network][other_network] = error
+            self.pred_power[network][other_network] = bnorms / ynorms
 
         # Set `self.neuron_sort`
         # {network: sorted_list}
         self.neuron_sort = {}
-        # Sort neurons by worst correlation (highest regression error) with another network
+        # Sort neurons by worst correlation with another network
         for network in tqdm(self.representations_d, desc='annotation'):
             self.neuron_sort[network] = sorted(
-                range(self.num_neurons_d[network]),
-                key = lambda i: max(
-                    self.errors[network][other][i] 
-                    for other in self.errors[network]
+                    range(self.num_neurons_d[network]),
+                    key = lambda i: min(
+                        self.pred_power[network][other][i] 
+                        for other in self.errors[network]),
+                    reverse=True
                 )
-            )
+
 
     def write_correlations(self, output_file):
         self.neuron_notated_sort = {}
@@ -302,7 +321,8 @@ class SVCCA(Method):
                 self.representations_d[network] = (t - means) / stdevs
 
         # Set `whitening_transforms`, `pca_directions`
-        whitening_transforms = {} # {network: whitening_tensor}
+        # {network: whitening_tensor}
+        whitening_transforms = {} 
         pca_directions = {} 
         for network in tqdm(self.representations_d, desc='pca'):
             X = self.representations_d[network]
@@ -317,16 +337,18 @@ class SVCCA(Method):
             whitening_transforms[network] = whitening_transform[:, :wanted_size]
             pca_directions[network] = U[:, :wanted_size]
 
-        # Set `self.transforms` to be {network: {other: svcca_transform}}
+        # Set `self.transforms`
+        # {network: {other: svcca_transform}}
         self.transforms = {network: {} for network in self.representations_d}
         for network, other_network in tqdm(p(self.representations_d,
-                                             self.representations_d), desc='cca',
+                                             self.representations_d),
+                                           desc='cca',
                                            total=len(self.representations_d)**2):
 
             if network == other_network:
                 continue
 
-            if other_network in self.transforms[network].keys(): # TO DO: optimize?
+            if other_network in self.transforms[network]: 
                 continue
 
             X = pca_directions[network]
@@ -369,15 +391,17 @@ class CKA(Method):
 
         # Set `self.similarities`
         # {network: {other: cka_similarity}}
-        self.similarities = {network: {} for network in self.representations_d}
+        self.similarities = {network: {} for network in
+                             self.representations_d}
         for network, other_network in tqdm(p(self.representations_d,
-                                             self.representations_d), desc='cka',
+                                             self.representations_d),
+                                           desc='cka',
                                            total=len(self.representations_d)**2):
 
             if network == other_network:
                 continue
 
-            if other_network in self.similarities[network].keys(): # TO DO: optimize?
+            if other_network in self.similarities[network]: 
                 continue
 
             X = self.representations_d[network]
@@ -388,7 +412,8 @@ class CKA(Method):
             YtX_F = torch.norm(torch.mm(Y.t(), X), p='fro').item()
 
             # eq 5 in paper
-            self.similarities[network][other_network] = YtX_F**2 / (XtX_F*YtY_F)
+            self.similarities[network][other_network] = (YtX_F**2 /
+                                                         (XtX_F*YtY_F))
 
     def write_correlations(self, output_file):
         torch.save(self.similarities, output_file)

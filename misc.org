@@ -82,25 +82,26 @@
   Will PyTorch tensor operations automatically use the GPU if one is available?
   If not, then should I add this default to the code?
 * Misc
-- [X] As it is (Mon Jun 17 12:41:34 EDT 2019), the data will be loaded on each
-  call of the script. As far as I can tell, the data loading is a significant
-  portion of the runtime, so this may not be the smartest. Maybe change the
-  architecture later. *YB*: agree, especially since we may want to apply all
-  correlation methods on the same data.
+- [X] As it is (Mon Jun 17 12:41:34 EDT 2019), the data will be loaded
+  on each call of the script. As far as I can tell, the data loading is
+  a significant portion of the runtime, so this may not be the
+  smartest. Maybe change the architecture later. *YB*: agree, especially
+  since we may want to apply all correlation methods on the same data.
 
   As of commit 1fc4e6f, this is resolved. 
-- [X] Is there a reason why we need a "Method" class? Why can't everything be
-  unrolled into a single, large script? *YB*: eventually, we may want to call
-  these from another program (e.g., NeuroX) so having a separate file for
-  defining the methods which is different from where they are called would be
-  useful.
+- [X] Is there a reason why we need a "Method" class? Why can't
+  everything be unrolled into a single, large script? *YB*: eventually,
+  we may want to call these from another program (e.g., NeuroX) so
+  having a separate file for defining the methods which is different
+  from where they are called would be useful.
 
   Ok, I guess what I was wondering was more like why we need classes at all. The
   answer is most likely just because =compute_correlations= and
   =write_correlations=, things defined for each Method, are coupled. It would be
   weird to have 10 functions like =CKA_write=, =CKA_compute=, =LinReg_write=,
   =LinReg_compute=, etc. all in the global namespace. 
-- Maybe clean up the comments at some point (look more professional). 
+- [X] Maybe clean up the comments at some point (look more
+  professional).
 - In the CKA paper, they suggest different kernels. 
 - MaxMinCorr is very inelegantly programmed. Maybe change at some point. 
 

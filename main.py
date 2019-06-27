@@ -57,8 +57,8 @@ def main(method, representation_files, output_file):
     print('\nWriting correlations')
     for method in methods:
         print('For method: ', str(method))
-        out_fname = str(method) + '_' + output_file if len(methods) > 1 else output_file
-
+        out_fname = (output_file + '_' + str(method) if len(methods) > 1
+                     else output_file)
         method.write_correlations(out_fname)
 
 if __name__ == '__main__':
