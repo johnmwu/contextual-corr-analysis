@@ -19,6 +19,8 @@ Files
 
 - slurm
   SLURM scripts. 
+  
+  Scripts here are run directly as ~srun SCRIPTNAME~. 
 
 - tests
   Testing correctness. 

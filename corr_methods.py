@@ -6,7 +6,8 @@ import numpy as np
 import h5py
 
 def load_representations(representation_fname_l, limit=None, layer=None,
-                         first_half_only=False, second_half_only=False):
+                         first_half_only=False, second_half_only=False,
+                         disable_cuda=False):
     """
     Load data. Returns `num_neurons_d` and `representations_d`. 
 
@@ -25,6 +26,8 @@ def load_representations(representation_fname_l, limit=None, layer=None,
         Only use the first half of the neurons.
     second_half_only : bool
         Only use the second half of the neurons. 
+    disable_cuda : bool
+        Disable CUDA. 
 
     Returns
     ----
@@ -38,13 +41,18 @@ def load_representations(representation_fname_l, limit=None, layer=None,
     num_neurons_d = {} 
     representations_d = {} 
 
+    if not disable_cuda and torch.cuda.is_available():
+        device = torch.device('cuda')
+    else:
+        device = torch.device('cpu')
+
     # formatting follows contexteval:
     # https://github.com/nelson-liu/contextual-repr-analysis/blob/master/contexteval/contextualizers/precomputed_contextualizer.py
     for fname in tqdm(representation_fname_l, desc='loading'):
         # Create `activations_h5`, `sentence_d`, `indices`
         activations_h5 = h5py.File(fname, 'r')
         sentence_d = json.loads(activations_h5['sentence_to_index'][0])
-        temp = {}
+        temp = {} # TO DO: Make this more elegant?
         for k, v in sentence_d.items():
             temp[v] = k
         sentence_d = temp # {str ix, sentence}
@@ -55,6 +63,8 @@ def load_representations(representation_fname_l, limit=None, layer=None,
         for sentence_ix in indices: 
             # Create `activations`
             activations = torch.FloatTensor(activations_h5[sentence_ix])
+            activations = activations.to(device)
+                                            
             if not (activations.dim() == 2 or activations.dim() == 3):
                 raise ValueError('Improper array dimension in file: ' +
                                  fname + "\nShape: " +
@@ -78,7 +88,7 @@ def load_representations(representation_fname_l, limit=None, layer=None,
             representations_l.append(representations)
 
         num_neurons_d[fname] = representations_l[0].size()[1]
-        representations_d[fname] = torch.cat(representations_l) # TO DO: .cpu()?
+        representations_d[fname] = torch.cat(representations_l) 
 
     return (num_neurons_d, representations_d)
 
@@ -244,6 +254,7 @@ class LinReg(Method):
 
         # Set `self.pred_power`
         # If the data is centered, it is the r value. 
+        self.pred_power = {network: {} for network in self.representations_d}
         for network, other_network in tqdm(p(self.representations_d,
                                              self.representations_d),
                                            desc='correlate',
@@ -273,7 +284,7 @@ class LinReg(Method):
                     range(self.num_neurons_d[network]),
                     key = lambda i: min(
                         self.pred_power[network][other][i] 
-                        for other in self.errors[network]),
+                        for other in self.pred_power[network]),
                     reverse=True
                 )
 
@@ -285,8 +296,8 @@ class LinReg(Method):
                 (
                     neuron,
                     {
-                        other: float(self.errors[network][other][neuron])
-                        for other in self.errors[network]
+                        other: float(self.pred_power[network][other][neuron])
+                        for other in self.pred_power[network]
                     }
                 )
                 for neuron in self.neuron_sort[network]

@@ -1,0 +1,53 @@
+(jmw0) johnmwu@sls-510-1:/usr/users/johnmwu/contextual-corr-analysis/slurm$ sr
+un mk_results1.sh                                                            
+loading: 100%|██████████| 6/6 [19:16<00:00, 186.38s/it]
+mu, sigma: 100%|██████████| 6/6 [00:07<00:00,  1.36s/it]
+correlate: 100%|██████████| 36/36 [00:27<00:00,  1.31it/s]
+self.clusters: 100%|██████████| 6/6 [00:23<00:00,  4.07s/it]
+annotation: 100%|██████████| 6/6 [00:00<00:00, 116.39it/s]
+mu, sigma: 100%|██████████| 6/6 [00:04<00:00,  1.18it/s]
+correlate: 100%|██████████| 36/36 [00:27<00:00,  1.30it/s]
+self.clusters: 100%|██████████| 6/6 [00:18<00:00,  3.28s/it]
+annotation: 100%|██████████| 6/6 [00:00<00:00, 126.36it/s]
+mu, sigma: 100%|██████████| 6/6 [00:07<00:00,  1.31s/it]
+correlate: 100%|██████████| 36/36 [08:09<00:00, 13.59s/it]
+annotation: 100%|██████████| 6/6 [00:00<00:00,  6.01it/s]
+pca: 100%|██████████| 6/6 [01:25<00:00, 15.72s/it]
+cca: 100%|██████████| 36/36 [00:25<00:00,  1.42it/s]
+mu, sigma: 100%|██████████| 6/6 [00:08<00:00,  1.57s/it]
+cka: 100%|██████████| 36/36 [02:41<00:00,  4.49s/it]
+write: 100%|██████████| 6/6 [00:00<00:00, 33.07it/s]
+write: 100%|██████████| 6/6 [00:00<00:00, 44.49it/s]
+write: 100%|██████████| 6/6 [00:00<00:00, 17.69it/s]
+Loading representations
+
+Initializing method all
+
+Computing correlations
+For method:  maxcorr
+For method:  mincorr
+For method:  linreg
+For method:  svcca
+For network /data/sls/temp/belinkov/contextual-corr-analysis/contextualizers/b
+ert_large_cased/ptb_pos_dev.hdf5 wanted size is 911                          
+For network /data/sls/temp/belinkov/contextual-corr-analysis/contextualizers/o
+penai_transformer/ptb_pos_dev.hdf5 wanted size is 700                        
+For network /data/sls/temp/belinkov/contextual-corr-analysis/contextualizers/b
+ert_base_cased/ptb_pos_dev.hdf5 wanted size is 696                           
+For network /data/sls/temp/belinkov/contextual-corr-analysis/contextualizers/e
+lmo_original/ptb_pos_dev.hdf5 wanted size is 951                             
+For network /data/sls/temp/belinkov/contextual-corr-analysis/contextualizers/c
+alypso_transformer_6_512_base/ptb_pos_dev.hdf5 wanted size is 900            
+For network /data/sls/temp/belinkov/contextual-corr-analysis/contextualizers/e
+lmo_4x4096_512/ptb_pos_dev.hdf5 wanted size is 949                           
+For method:  cka
+
+Writing correlations
+For method:  maxcorr
+For method:  mincorr
+For method:  linreg
+For method:  svcca
+For method:  cka
+
+# The print statements for "we're about to do ..." don't work because io
+# is buffered or smth in slurm..

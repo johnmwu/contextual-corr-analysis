@@ -110,6 +110,22 @@
   create the object =self.neuron_notated_sort=, it can be done much more
   cleanly. 
 - Maybe add a makefile to the test directory. 
+- Ideas 
+  Written Fri Jun 28 17:04:24 EDT 2019
+  - Test whether these neurons are actually important.  This may be
+    difficult, as these are upstream models. However, I think that
+    this could be doable, but we need to choose the e2e model well. 
+  - Determine whether there are particular neurons that capture
+    specific linguistic information. An interesting thing to look
+    at would be activations on the same word, in different
+    contexts. This is already explored in some of the papers.
+  - Do the contextual word representations also learn a better
+    representation of words, regardless of context? How does the
+    mean of all representations for a word perform?
+  - What things do highly correlated neurons learn? Assuming highly
+    correlated neurons are important, then what are these neurons
+    learning?
+  - What are features that model X learns, but model Y doesn't?
 - Papers read
   - Identifying and Controlling Important Neurons.. 
   - Neural Machine Translation by Jointly Learning... (attn)
@@ -158,3 +174,39 @@ notebooks). Please have a brief glance.
 
 Please let me know what you want me to do next. Should I now attempt to run the
 code on the files you gave me? How should I go about doing this?
+* Goal
+Not sure. 
+
+Written Fri Jun 28 17:05:08 EDT 2019
+
+What is the fundamental thing we're doing? We're trying to
+understand how these contextualizers work. We are doing this
+using correlations. "Understand", here, is the loaded word. What
+could this mean? In fact, this ties back into the question: what
+does it mean to comprehend an object?
+- Decomposition. This is the view of "understanding" proposed by
+  category theorists.
+
+  The ideal feature mapping is one in which each axis represents
+  a single property, and the codomain of that property is a
+  totally ordered set. This would be like neuron 1 captures
+  sentiment, neuron 2 captures tense, etc. One can impose order
+  on both of these. There should be no correlation between
+  these. Some properties are inherently categorical, with no
+  order. These, I suppose, must get their own axis. 
+
+  A slightly worse property would be to have basically this, but
+  things not be axis aligned.
+- Make predictions about it. 
+
+  Don't like this. This is a conventional definition of
+  "understanding". However, someone may know both languages, and
+  can translate between them. Ideally, their output should be
+  similar to the model's. Does this mean they understand the
+  model?
+
+  Perhaps make predictions about when it won't work. 
+- Make small changes to alter the behavior. 
+
+
+
