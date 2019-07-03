@@ -348,9 +348,13 @@ class SVCCA(Method):
             whitening_transforms[network] = whitening_transform[:, :wanted_size]
             pca_directions[network] = U[:, :wanted_size]
 
-        # Set `self.transforms`
-        # {network: {other: svcca_transform}}
+        # Set 
+        # `self.transforms`: {network: {other: svcca_transform}}
+        # `self.corrs`: {network: {other: canonical_corrs}}
+        # `self.similarities`: {network: {other: svcca_similarities}}
         self.transforms = {network: {} for network in self.representations_d}
+        self.corrs = {network: {} for network in self.representations_d}
+        self.similarities = {network: {} for network in self.representations_d}
         for network, other_network in tqdm(p(self.representations_d,
                                              self.representations_d),
                                            desc='cca',
@@ -373,8 +377,19 @@ class SVCCA(Method):
             self.transforms[network][other_network] = torch.mm(whitening_transforms[network], u)
             self.transforms[other_network][network] = torch.mm(whitening_transforms[other_network], v)
 
+            self.corrs[network][other_network] = s
+            self.corrs[other_network][network] = s
+
+            self.similarities[network][other_network] = s.mean().item()
+            self.similarities[other_network][network] = s.mean().item()
+
     def write_correlations(self, output_file):
-        torch.save(self.transforms, output_file)
+        output = {
+            "transforms": self.transforms,
+            "corrs": self.corrs,
+            "similarities": self.similarities,
+        }
+        torch.save(output, output_file)
 
     def __str__(self):
         return "svcca"

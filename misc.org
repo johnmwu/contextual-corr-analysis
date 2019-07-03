@@ -109,6 +109,9 @@
   =self.clusters=, =self.neuron_sort=. Do we need these? If our goal is only to
   create the object =self.neuron_notated_sort=, it can be done much more
   cleanly. 
+- How to do ELMo
+  
+  ELMo is recommended as taking a linear combination of layers. 
 - Maybe add a makefile to the test directory. 
 - Ideas 
   Written Fri Jun 28 17:04:24 EDT 2019
