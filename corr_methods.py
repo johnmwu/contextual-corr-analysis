@@ -438,8 +438,9 @@ class CKA(Method):
             YtX_F = torch.norm(torch.mm(Y.t(), X), p='fro').item()
 
             # eq 5 in paper
-            self.similarities[network][other_network] = (YtX_F**2 /
-                                                         (XtX_F*YtY_F))
+            sim = YtX_F**2 / (XtX_F*YtY_F)
+            self.similarities[network][other_network] = sim
+            self.similarities[other_network][network] = sim
 
     def write_correlations(self, output_file):
         torch.save(self.similarities, output_file)
