@@ -1,0 +1,3 @@
+(jmw0) johnmwu@sls-510-1:/usr/users/johnmwu/contextual-corr-analysis/slurm$ srun mk_results3.sh 
+mu, sigma: 100%|██████████| 6/6 [21:45<00:00, 204.04s/it]
+

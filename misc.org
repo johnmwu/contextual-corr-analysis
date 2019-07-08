@@ -1,12 +1,14 @@
 * Question
-- [X] In the =sentence_d= variable, why are they (sentence, string index) pairs by
-  default? See =load_embedding_hnb= *YB*: the hdf5 file structure comes from
-  [[https://github.com/nelson-liu/contextual-repr-analysis/blob/master/contexteval/contextualizers/precomputed_contextualizer.py][Nelson's code]]. Maybe going through the string is a sanity check to make sure
-  we're consistent with the same sentences. Feel free to use it differently
-  though.
-- [X] How do I interpret the embeddings? See =load_embeddings_hnb= I think these are
-  num_layers x len(sentence) x num_neurons. I need to verify. *YB: yes, this is
-  correct*
+- [X] In the =sentence_d= variable, why are they (sentence, string
+  index) pairs by default? 
+  
+  See =load_embedding_hnb= *YB*: the hdf5 file structure comes from
+  [[https://github.com/nelson-liu/contextual-repr-analysis/blob/master/contexteval/contextualizers/precomputed_contextualizer.py][Nelson's code]]. Maybe going through the string is a sanity check to
+  make sure we're consistent with the same sentences. Feel free to use
+  it differently though.
+- [X] How do I interpret the embeddings? See =load_embeddings_hnb= I
+  think these are num_layers x len(sentence) x num_neurons. I need to
+  verify. *YB: yes, this is correct*
   - [X] num_layers
   - [X] len(sentence)
     Fairly certain
@@ -129,6 +131,14 @@
     correlated neurons are important, then what are these neurons
     learning?
   - What are features that model X learns, but model Y doesn't?
+  Written Mon Jul  8 12:50:31 EDT 2019
+  - Values of attention heads
+  - Values of the cell of the lstm.
+  - Also gates. Gates could be doing similar things to attention heads.
+  - Maybe different contextualizers. For example, elmo trained w/ diff
+    objectives. Maybe elmo on A is more correlated to bert on A than
+    elmo on A with elmo on B. Also maybe xlnet or gpt2 (different
+    models). We don't have activations. Use huggingface interface maybe.
 - Papers read
   - Identifying and Controlling Important Neurons.. 
   - Neural Machine Translation by Jointly Learning... (attn)
