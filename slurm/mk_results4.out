@@ -1,0 +1,2 @@
+(jmw0) johnmwu@sls-510-1:/usr/users/johnmwu/contextual-corr-analysis/slurm$ srun mk_results4.sh --gres=gpu:2 --partition=2080 --mem=24GB
+mu, sigma: 100%|██████████| 6/6 [21:15<00:00, 199.59s/it]
