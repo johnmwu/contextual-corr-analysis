@@ -1,32 +1,14 @@
-"""
-Compute correlations between contextualizer
+import argparse
+from corr_methods import (load_representations, MaxCorr, MinCorr,
+                          MaxLinReg, MinLinReg, SVCCA, CKA)
 
-Usage: 
-  main.py METHOD REPRESENTATION_FILES OUTPUT_FILE
-
-Arguments:
-  METHOD            Correlation method to use. Choose from one of
-                        "min", "max", "linreg", "svcca", "cka", "all"
-  REPRESENTATION_FILES   File containing list of locations of representation files 
-                        (one per line)
-  OUTPUT_FILE       File to write the output correlations
-
-Options:
-  -h, --help                             show this help message  
-
-"""
-
-from docopt import docopt
-
-def main(method, representation_files, output_file):
-    from corr_methods import (load_representations, MaxCorr, MinCorr,
-                              MaxLinReg, MinLinReg, SVCCA, CKA)
-
+def main(method, representation_files, output_file, limit=None,
+         disable_cuda=False):
     with open(representation_files) as f:
         representation_fname_l = [line.strip() for line in f]
 
     print("Loading representations")
-    num_neurons_d, representations_d = load_representations(representation_fname_l)
+    num_neurons_d, representations_d = load_representations(representation_fname_l, limit=limit, disable_cuda=disable_cuda)
     
     print('\nInitializing method ' + method) 
     if method == 'all':
@@ -38,14 +20,14 @@ def main(method, representation_files, output_file):
             SVCCA(num_neurons_d, representations_d),
             CKA(num_neurons_d, representations_d),
             ]
-    elif method == 'max':
+    elif method == 'maxcorr':
         methods = [MaxCorr(num_neurons_d, representations_d)]
-    elif method == 'min':
+    elif method == 'mincorr':
         methods = [MinCorr(num_neurons_d, representations_d)]
-    elif method == 'linreg':
-        methods = [MaxLinReg(num_neurons_d, representations_d),
-                   MinLinReg(num_neurons_d, representations_d),
-        ]
+    elif method == 'maxlinreg':
+        methods = [MaxLinReg(num_neurons_d, representations_d)]
+    elif method == 'minlinreg':
+        methods = [MinLinReg(num_neurons_d, representations_d)]
     elif method == 'svcca':
         methods = [SVCCA(num_neurons_d, representations_d)]
     elif method == 'cka':
@@ -66,9 +48,18 @@ def main(method, representation_files, output_file):
         method.write_correlations(out_fname)
 
 if __name__ == '__main__':
-    args = docopt(__doc__)
+    parser = argparse.ArgumentParser()
+    parser.add_argument("method",
+                        choices={'mincorr', 'maxcorr', 'maxlinreg',
+                                           'minlinreg', 'svcca', 'cka',
+                                           'all'})
+    parser.add_argument("representation_files")
+    parser.add_argument("output_file")
+    parser.add_argument("--limit", dest="limit", type=int, default=None)
+    parser.add_argument("--disable_cuda", action="store_true")
 
-    assert args['METHOD'] in {'min', 'max', 'linreg', 'svcca', 'cka', 'all'}, 'Unknown METHOD argument: ' + args['METHOD']
-    main(args['METHOD'], args['REPRESENTATION_FILES'], args['OUTPUT_FILE']) 
+    args = parser.parse_args()
+    main(args.method, args.representation_files, args.output_file,
+         limit=args.limit, disable_cuda=args.disable_cuda) 
 
 
