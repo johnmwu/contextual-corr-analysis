@@ -19,7 +19,8 @@ Options:
 from docopt import docopt
 
 def main(method, representation_files, output_file):
-    from corr_methods import load_representations, MaxCorr, MinCorr, LinReg, SVCCA, CKA
+    from corr_methods import (load_representations, MaxCorr, MinCorr,
+                              MaxLinReg, MinLinReg, SVCCA, CKA)
 
     with open(representation_files) as f:
         representation_fname_l = [line.strip() for line in f]
@@ -32,16 +33,19 @@ def main(method, representation_files, output_file):
         methods = [
             MaxCorr(num_neurons_d, representations_d),
             MinCorr(num_neurons_d, representations_d),
-            LinReg(num_neurons_d, representations_d),
+            MaxLinReg(num_neurons_d, representations_d),
+            MinLinReg(num_neurons_d, representations_d),
             SVCCA(num_neurons_d, representations_d),
             CKA(num_neurons_d, representations_d),
-                   ]
+            ]
     elif method == 'max':
         methods = [MaxCorr(num_neurons_d, representations_d)]
     elif method == 'min':
         methods = [MinCorr(num_neurons_d, representations_d)]
     elif method == 'linreg':
-        methods = [LinReg(num_neurons_d, representations_d)]
+        methods = [MaxLinReg(num_neurons_d, representations_d),
+                   MinLinReg(num_neurons_d, representations_d),
+        ]
     elif method == 'svcca':
         methods = [SVCCA(num_neurons_d, representations_d)]
     elif method == 'cka':

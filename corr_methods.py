@@ -232,8 +232,10 @@ class MinCorr(MaxMinCorr):
 
 
 class LinReg(Method): 
-    def __init__(self, num_neurons_d, representations_d):
+    def __init__(self, num_neurons_d, representations_d, op):
         super().__init__(num_neurons_d, representations_d)
+
+        self.op = op
 
     def compute_correlations(self):
         """
@@ -282,7 +284,7 @@ class LinReg(Method):
         for network in tqdm(self.representations_d, desc='annotation'):
             self.neuron_sort[network] = sorted(
                     range(self.num_neurons_d[network]),
-                    key = lambda i: min(
+                    key = lambda i: op(
                         self.pred_power[network][other][i] 
                         for other in self.pred_power[network]),
                     reverse=True
@@ -307,6 +309,29 @@ class LinReg(Method):
 
     def __str__(self):
         return "linreg"
+
+
+class MaxLinReg(LinReg):
+    def __init__(self, num_neurons_d, representations_d):
+        super().__init__(num_neurons_d, representations_d, op=max)
+
+    def compute_correlations(self):
+        super().compute_correlations()
+
+    def __str__(self):
+        return "maxlinreg"
+    
+
+class MinLinReg(LinReg):
+    def __init__(self, num_neurons_d, representations_d):
+        super().__init__(num_neurons_d, representations_d, op=min)
+
+    def compute_correlations(self):
+        super().compute_correlations()
+
+    def __str__(self):
+        return "minlinreg"
+
 
 class SVCCA(Method):
     def __init__(self, num_neurons_d, representations_d, percent_variance=0.99,
