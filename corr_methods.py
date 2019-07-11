@@ -5,9 +5,9 @@ import json
 import numpy as np
 import h5py
 
-def load_representations(representation_fname_l, limit=None, layer=None,
-                         first_half_only=False, second_half_only=False,
-                         disable_cuda=False):
+def load_representations(representation_fname_l, limit=None,
+                         layerspec_l=None, first_half_only_l=False,
+                         second_half_only_l=False, disable_cuda=False):
     """
     Load data. Returns `num_neurons_d` and `representations_d`. 
 
@@ -15,16 +15,16 @@ def load_representations(representation_fname_l, limit=None, layer=None,
     ----
     representation_fname_l : list<str>
         List of filenames. 
-    limit : int or NoneType
-        Cap on the number of data points. None if no cap. 
-    layer : int or NoneType
+    limit : int or None
+        Cap on the number of data points (here, sentences). None if no cap.
+    layer : TO DO
         Layer to correlate. None if the top layer. 
 
         Currently (d1c0249), you are forced to always correlate the same
         layer of each model.
-    first_half_only : bool
+    first_half_only : TO DO
         Only use the first half of the neurons.
-    second_half_only : bool
+    second_half_only : TO DO
         Only use the second half of the neurons. 
     disable_cuda : bool
         Disable CUDA. 
@@ -32,24 +32,34 @@ def load_representations(representation_fname_l, limit=None, layer=None,
     Returns
     ----
     num_neurons_d : dict<str, int>
-        Dict of {fname : num_neurons}
+        Dict of {repr_name : num_neurons}
     representations_d : dict<str, tensor>
-        Dict of {fname : (len_data, num_neurons) tensor}. The tensor
+        Dict of {repr_name : (len_data, num_neurons) tensor}. The tensor
         contains the activations for a given model on each input data
         point. 
     """
-    num_neurons_d = {} 
-    representations_d = {} 
+    def fname2mname(fname):
+        """
+        "filename to model name". 
+        """
+        return basename(dirname(fname))
 
     if not disable_cuda and torch.cuda.is_available():
         device = torch.device('cuda')
     else:
         device = torch.device('cpu')
 
+    num_neurons_d = {} 
+    representations_d = {} 
+
     # formatting follows contexteval:
     # https://github.com/nelson-liu/contextual-repr-analysis/blob/master/contexteval/contextualizers/precomputed_contextualizer.py
-    for fname in tqdm(representation_fname_l, desc='loading'):
-        # Create `activations_h5`, `sentence_d`, `indices`
+    for loop_var in tqdm(zip(representation_fname_l, layerspec_l,
+                             first_half_only_l, second_half_only_l)):
+
+        fname, layerspec, first_half_only, second_half_only = loop_var
+
+        # Set `activations_h5`, `sentence_d`, `indices`
         activations_h5 = h5py.File(fname, 'r')
         sentence_d = json.loads(activations_h5['sentence_to_index'][0])
         temp = {} # TO DO: Make this more elegant?
@@ -58,37 +68,45 @@ def load_representations(representation_fname_l, limit=None, layer=None,
         sentence_d = temp # {str ix, sentence}
         indices = list(sentence_d.keys())[:limit]
 
-        # Create `representations_l`
-        representations_l = []
-        for sentence_ix in indices: 
-            # Create `activations`
-            activations = torch.FloatTensor(activations_h5[sentence_ix])
-            activations = activations.to(device)
-                                            
-            if not (activations.dim() == 2 or activations.dim() == 3):
-                raise ValueError('Improper array dimension in file: ' +
-                                 fname + "\nShape: " +
-                                 str(activations.shape))
+        # Set `num_layers`, `num_neurons`, `layers`
+        s = activations_h5[indices[0]].shape
+        num_layers = 1 if len(s)==2 else s[0]
+        num_neurons = s[-1]
+        layers = list(range(num_layers)) if layerspec=="all" else [layerspec]
 
-            # Create `representations`
-            representations = activations
-            if activations.dim() == 3:
-                if layer is not None: 
-                    representations = activations[layer] 
-                else:
-                    # use the top layer by default
-                    representations = activations[-1]
-            if first_half_only: 
-                representations = torch.chunk(representations, chunks=2,
-                                              dim=-1)[0]
-            elif second_half_only:
-                representations = torch.chunk(representations, chunks=2,
-                                              dim=-1)[1]
+        # Main loop. Set `num_neurons_d`, `representations_d`. 
+        for layer in layers:
+            # Create `representations_l`
+            representations_l = []
+            for sentence_ix in indices: 
+                # Set `dim`
+                dim = len(activations_h5[sentence_ix].shape)
+                if not (dim == 2 or dim == 3):
+                    raise ValueError('Improper array dimension in file: ' +
+                                     fname + "\nShape: " +
+                                     str(activations_h5[sentence_ix].shape))
 
-            representations_l.append(representations)
+                # Create `activations`
+                activations = torch.FloatTensor(activations_h5[sentence_ix][layer] if dim==3 
+                                                else activations_h5[sentence_ix])
+                activations = activations.to(device)
 
-        num_neurons_d[fname] = representations_l[0].size()[1]
-        representations_d[fname] = torch.cat(representations_l) 
+                # Create `representations`
+                representations = activations
+                if first_half_only: 
+                    representations = torch.chunk(representations, chunks=2,
+                                                  dim=-1)[0]
+                elif second_half_only:
+                    representations = torch.chunk(representations, chunks=2,
+                                                  dim=-1)[1]
+
+                representations_l.append(representations)
+
+            # Main update. 
+            model_name = "{model}_{layer}".format(model=fname2mname(fname), 
+                                                  layer=layer)
+            num_neurons_d[model_name] = num_neurons
+            representations_d[model_name] = torch.cat(representations_l)
 
     return (num_neurons_d, representations_d)
 
