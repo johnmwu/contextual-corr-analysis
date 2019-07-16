@@ -1,0 +1,16 @@
+(jmw0) johnmwu@sls-510-1:/usr/users/johnmwu/contextual-corr-analysis/slurm$ srun --gres=gpu:2 --partition=1080 --mem=32GB mk_results6.sh 
+1it [00:26, 26.84s/it]
+mu, sigma: 100%|██████████| 3/3 [00:00<00:00, 390.07it/s]
+correlate: 100%|██████████| 9/9 [00:01<00:00,  6.31it/s]
+self.clusters: 100%|██████████| 3/3 [00:03<00:00,  1.19s/it]
+annotation: 100%|██████████| 3/3 [00:00<00:00, 188.29it/s]
+write: 100%|██████████| 3/3 [00:00<00:00, 167.47it/s]
+Loading representations
+
+Initializing methods ['maxcorr']
+
+Computing correlations
+For method:  maxcorr
+
+Writing correlations
+For method:  maxcorr

@@ -4,6 +4,7 @@ from itertools import product as p
 import json
 import numpy as np
 import h5py
+from os.path import basename, dirname
 
 def load_representations(representation_fname_l, limit=None,
                          layerspec_l=None, first_half_only_l=False,
@@ -115,7 +116,7 @@ class Method(object):
     """
     Abstract representation of a correlation method. 
 
-    Example instances are MaxCorr, MinCorr, LinReg, SVCCA, CKA. 
+    Example instances are MaxCorr, MinCorr, LinReg, CCA, CKA. 
     """
     def __init__(self, num_neurons_d, representations_d):
         self.num_neurons_d = num_neurons_d
@@ -259,9 +260,11 @@ class LinReg(Method):
         """
         Set `self.neuron_sort`. 
         """
-        # Set `means_d`, `stdevs_d`, normalize to mean 0 std 1
+        # Set `means_d`, `stdevs_d`
+        # Set `self.nrepresentations_d` to be normalized. 
         means_d = {}
         stdevs_d = {}
+        self.nrepresentations_d = {}
 
         for network in tqdm(self.representations_d, desc='mu, sigma'):
             t = self.representations_d[network]
@@ -270,7 +273,7 @@ class LinReg(Method):
 
             means_d[network] = means
             stdevs_d[network] = stdevs
-            self.representations_d[network] = (t - means) / stdevs
+            self.nrepresentations_d[network] = (t - means) / stdevs
 
         # Set `self.pred_power`
         # If the data is centered, it is the r value. 
@@ -283,8 +286,8 @@ class LinReg(Method):
             if network == other_network:
                 continue
 
-            X = self.representations_d[other_network]
-            Y = self.representations_d[network]
+            X = self.nrepresentations_d[other_network]
+            Y = self.nrepresentations_d[network]
 
             # SVD method of linreg
             U, S, V = torch.svd(X) 
@@ -299,7 +302,7 @@ class LinReg(Method):
         # {network: sorted_list}
         self.neuron_sort = {}
         # Sort neurons by worst correlation with another network
-        for network in tqdm(self.representations_d, desc='annotation'):
+        for network in tqdm(self.nrepresentations_d, desc='annotation'):
             self.neuron_sort[network] = sorted(
                     range(self.num_neurons_d[network]),
                     key = lambda i: op(
@@ -311,7 +314,7 @@ class LinReg(Method):
 
     def write_correlations(self, output_file):
         self.neuron_notated_sort = {}
-        for network in tqdm(self.representations_d, desc='write'):
+        for network in tqdm(self.nrepresentations_d, desc='write'):
             self.neuron_notated_sort[network] = [
                 (
                     neuron,
@@ -351,91 +354,120 @@ class MinLinReg(LinReg):
         return "minlinreg"
 
 
-class SVCCA(Method):
-    def __init__(self, num_neurons_d, representations_d, percent_variance=0.99,
-                 normalize_dimensions=False):
+class CCA(Method):
+    def __init__(self, num_neurons_d, representations_d,
+                 percent_variance=0.99, normalize_dimensions=False,
+                 save_cca_transforms=False):
         super().__init__(num_neurons_d, representations_d)
 
         self.percent_variance = percent_variance
         self.normalize_dimensions = normalize_dimensions
+        self.save_cca_transforms = save_cca_transforms
 
-    def compute_correlations(self):
-        """
-        Set `self.transforms` to be the svcca transform matrix M. 
+def compute_correlations(self):
+    # Normalize
+    # Set `self.nrepresentations_d`
+    self.nrepresentations_d = {}
+    if self.normalize_dimensions:
+        for network in tqdm(self.representations_d, desc='mu, sigma'):
+            t = self.representations_d[network]
+            means = t.mean(0, keepdim=True)
+            stdevs = t.std(0, keepdim=True)
 
-        If X is the activation tensor, then X M is the svcca tensor. 
-        """ 
-        # Normalize
-        if self.normalize_dimensions:
-            for network in tqdm(self.representations_d, desc='mu, sigma'):
-                t = self.representations_d[network]
-                means = t.mean(0, keepdim=True)
-                stdevs = t.std(0, keepdim=True)
+            self.nrepresentations_d[network] = (t - means) / stdevs
 
-                self.representations_d[network] = (t - means) / stdevs
+    # Set `whitening_transforms`, `pca_directions`
+    # {network: whitening_tensor}
+    whitening_transforms = {} 
+    pca_directions = {} 
+    for network in tqdm(self.nrepresentations_d, desc='pca'):
+        X = self.nrepresentations_d[network]
+        U, S, V = torch.svd(X)
 
-        # Set `whitening_transforms`, `pca_directions`
-        # {network: whitening_tensor}
-        whitening_transforms = {} 
-        pca_directions = {} 
-        for network in tqdm(self.representations_d, desc='pca'):
-            X = self.representations_d[network]
-            U, S, V = torch.svd(X)
+        var_sums = torch.cumsum(S.pow(2), 0)
+        wanted_size = torch.sum(var_sums.lt(var_sums[-1] * self.percent_variance)).item()
 
-            var_sums = torch.cumsum(S.pow(2), 0)
-            wanted_size = torch.sum(var_sums.lt(var_sums[-1] * self.percent_variance)).item()
+        print('For network', network, 'wanted size is', wanted_size)
 
-            print('For network', network, 'wanted size is', wanted_size)
+        whitening_transform = torch.mm(V, torch.diag(1/S))
+        whitening_transforms[network] = whitening_transform[:, :wanted_size]
+        pca_directions[network] = U[:, :wanted_size]
 
-            whitening_transform = torch.mm(V, torch.diag(1/S))
-            whitening_transforms[network] = whitening_transform[:, :wanted_size]
-            pca_directions[network] = U[:, :wanted_size]
+    # Set 
+    # `self.transforms`: {network: {other: svcca_transform}}
+    # `self.corrs`: {network: {other: canonical_corrs}}
+    # `self.sv_similarities`: {network: {other: svcca_similarities}}
+    # `self.pw_similarities`: {network: {other: pwcca_similarities}}
+    self.transforms = {network: {} for network in self.nrepresentations_d}
+    self.corrs = {network: {} for network in self.nrepresentations_d}
+    self.sv_similarities = {network: {} for network in self.nrepresentations_d}
+    self.pw_similarities = {network: {} for network in self.nrepresentations_d}
+    for network, other_network in tqdm(p(self.nrepresentations_d,
+                                         self.nrepresentations_d),
+                                       desc='cca',
+                                       total=len(self.nrepresentations_d)**2):
 
-        # Set 
-        # `self.transforms`: {network: {other: svcca_transform}}
-        # `self.corrs`: {network: {other: canonical_corrs}}
-        # `self.similarities`: {network: {other: svcca_similarities}}
-        self.transforms = {network: {} for network in self.representations_d}
-        self.corrs = {network: {} for network in self.representations_d}
-        self.similarities = {network: {} for network in self.representations_d}
-        for network, other_network in tqdm(p(self.representations_d,
-                                             self.representations_d),
-                                           desc='cca',
-                                           total=len(self.representations_d)**2):
+        if network == other_network:
+            continue
 
-            if network == other_network:
-                continue
+        if other_network in self.transforms[network]: 
+            continue
 
-            if other_network in self.transforms[network]: 
-                continue
+        X = pca_directions[network]
+        Y = pca_directions[other_network]
 
-            X = pca_directions[network]
-            Y = pca_directions[other_network]
+        # Perform SVD for CCA.
+        # u s vt = Xt Y
+        # s = ut Xt Y v
+        u, s, v = torch.svd(torch.mm(X.t(), Y))
 
-            # Perform SVD for CCA.
-            # u s vt = Xt Y
-            # s = ut Xt Y v
-            u, s, v = torch.svd(torch.mm(X.t(), Y))
+        # `self.transforms`, `self.corrs`, `self.sv_similarities`
+        self.transforms[network][other_network] = torch.mm(whitening_transforms[network], u)
+        self.transforms[other_network][network] = torch.mm(whitening_transforms[other_network], v)
 
-            self.transforms[network][other_network] = torch.mm(whitening_transforms[network], u)
-            self.transforms[other_network][network] = torch.mm(whitening_transforms[other_network], v)
+        self.corrs[network][other_network] = s
+        self.corrs[other_network][network] = s
 
-            self.corrs[network][other_network] = s
-            self.corrs[other_network][network] = s
+        self.sv_similarities[network][other_network] = s.mean().item()
+        self.sv_similarities[other_network][network] = s.mean().item()
 
-            self.similarities[network][other_network] = s.mean().item()
-            self.similarities[other_network][network] = s.mean().item()
+        # Compute `self.pw_similarities`. See https://arxiv.org/abs/1806.05759
+        # This is not symmetric
+
+        # For X
+        H = torch.mm(X, u)
+        Z = self.representations_d[network]
+        align = torch.abs(torch.mm(H.t(), Z))
+        a = torch.sum(align, dim=1, keepdim=False)
+        a = a / torch.sum(a)
+        self.pw_similarities[network][other_network] = torch.sum(s*a).item()
+
+        # For Y
+        H = torch.mm(Y, v)
+        Z = self.representations_d[other_network]
+        align = torch.abs(torch.mm(H.t(), Z))
+        a = torch.sum(align, dim=1, keepdim=False)
+        a = a / torch.sum(a)
+        self.pw_similarities[other_network][network] = torch.sum(s*a).item()
 
     def write_correlations(self, output_file):
-        output = {
-            "transforms": self.transforms,
-            "corrs": self.corrs,
-            "similarities": self.similarities,
-        }
+        if self.save_cca_transforms:
+            output = {
+                "transforms": self.transforms,
+                "corrs": self.corrs,
+                "sv_similarities": self.sv_similarities,
+                "pw_similarities": self.pw_similarities,
+            }
+        else:
+            output = {
+                "corrs": self.corrs,
+                "sv_similarities": self.sv_similarities,
+                "pw_similarities": self.pw_similarities,
+            }
         torch.save(output, output_file)
 
     def __str__(self):
-        return "svcca"
+        return "cca"
 
 # https://debug-ml-iclr2019.github.io/cameraready/DebugML-19_paper_9.pdf
 class CKA(Method):

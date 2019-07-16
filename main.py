@@ -1,13 +1,8 @@
 import argparse
 from corr_methods import (load_representations, MaxCorr, MinCorr,
-                          MaxLinReg, MinLinReg, SVCCA, CKA)
+                          MaxLinReg, MinLinReg, CCA, CKA)
 
-def main(method, representation_files, output_file, opt_fname=None,
-         limit=None, disable_cuda=False):
-    with open(representation_files) as f:
-        representation_fname_l = [line.strip() for line in f]
-
-    # Set `layerspec_l`, `first_half_only_l`, `second_half_only_l`
+def get_options(opt_fname):
     if opt_fname == None:
         layerspec_l = [-1] * len(representation_fname_l)
         first_half_only_l = [False] * len(representation_fname_l)
@@ -38,54 +33,71 @@ def main(method, representation_files, output_file, opt_fname=None,
                 else:
                     second_half_only_l.append(False)
 
+    return layerspec_l, first_half_only_l, second_half_only_l
+
+def get_method_l(methods, num_neurons_d, representations_d):
+    if 'all' in methods:
+        method_l = [
+            MaxCorr(num_neurons_d, representations_d),
+            MinCorr(num_neurons_d, representations_d),
+            MaxLinReg(num_neurons_d, representations_d),
+            MinLinReg(num_neurons_d, representations_d),
+            CCA(num_neurons_d, representations_d),
+            CKA(num_neurons_d, representations_d),
+            ]
+    else:
+        method_l = []
+        for method in methods:
+            if method == 'maxcorr':
+                method_l.append(MaxCorr(num_neurons_d, representations_d))
+            elif method == 'mincorr':
+                method_l.append(MinCorr(num_neurons_d, representations_d))
+            elif method == 'maxlinreg':
+                method_l.append(MaxLinReg(num_neurons_d, representations_d))
+            elif method == 'minlinreg':
+                method_l.append(MinLinReg(num_neurons_d, representations_d))
+            elif method == 'cca':
+                method_l.append(CCA(num_neurons_d, representations_d))
+            elif method == 'cka':
+                method_l.append(CKA(num_neurons_d, representations_d))
+
+    return method_l
+
+def main(methods, representation_files, output_file, opt_fname=None,
+         limit=None, disable_cuda=False):
+
+    # Set `representation_fname_l`, and options
+    with open(representation_files) as f:
+        representation_fname_l = [line.strip() for line in f]
+
+    layerspec_l,first_half_only_l,second_half_only_l = get_options(opt_fname)
+    
+    # Load
     print("Loading representations")
     num_neurons_d, representations_d = load_representations(representation_fname_l, limit=limit,
                                                             layerspec_l=layerspec_l, first_half_only_l=first_half_only_l,
                                                             second_half_only_l=second_half_only_l, disable_cuda=disable_cuda)
     
-    print('\nInitializing method ' + method) 
-    if method == 'all':
-        methods = [
-            MaxCorr(num_neurons_d, representations_d),
-            MinCorr(num_neurons_d, representations_d),
-            MaxLinReg(num_neurons_d, representations_d),
-            MinLinReg(num_neurons_d, representations_d),
-            SVCCA(num_neurons_d, representations_d),
-            CKA(num_neurons_d, representations_d),
-            ]
-    elif method == 'maxcorr':
-        methods = [MaxCorr(num_neurons_d, representations_d)]
-    elif method == 'mincorr':
-        methods = [MinCorr(num_neurons_d, representations_d)]
-    elif method == 'maxlinreg':
-        methods = [MaxLinReg(num_neurons_d, representations_d)]
-    elif method == 'minlinreg':
-        methods = [MinLinReg(num_neurons_d, representations_d)]
-    elif method == 'svcca':
-        methods = [SVCCA(num_neurons_d, representations_d)]
-    elif method == 'cka':
-        methods = [CKA(num_neurons_d, representations_d)]
-    else:
-        raise Exception('Unknown method: ' + method)
+    # Set `method_l`, list of Method objects
+    print('\nInitializing methods ' + str(methods))
+    method_l = get_method_l(methods, num_neurons_d, representations_d)
 
+    # Run all methods in method_l
     print('\nComputing correlations')
-    for method in methods:
+    for method in method_l:
         print('For method: ', str(method))
         method.compute_correlations()
 
     print('\nWriting correlations')
-    for method in methods:
+    for method in method_l:
         print('For method: ', str(method))
-        out_fname = (output_file + '_' + str(method) if len(methods) > 1
+        out_fname = (output_file + '_' + str(method) if len(method_l) > 1
                      else output_file)
         method.write_correlations(out_fname)
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser()
-    parser.add_argument("method",
-                        choices={'mincorr', 'maxcorr', 'maxlinreg',
-                                           'minlinreg', 'svcca', 'cka',
-                                           'all'})
+    parser.add_argument("--methods", nargs="+")
     parser.add_argument("representation_files")
     parser.add_argument("output_file")
     parser.add_argument("--opt_fname", default=None)
@@ -93,7 +105,7 @@ if __name__ == '__main__':
     parser.add_argument("--disable_cuda", action="store_true")
 
     args = parser.parse_args()
-    main(args.method, args.representation_files, args.output_file,
+    main(args.methods, args.representation_files, args.output_file,
          opt_fname=args.opt_fname, limit=args.limit,
          disable_cuda=args.disable_cuda) 
 
