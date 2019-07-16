@@ -113,10 +113,10 @@ def load_representations(representation_fname_l, limit=None,
 
 
 class Method(object):
-    """
-    Abstract representation of a correlation method. 
+    """Abstract representation of a correlation method. 
 
-    Example instances are MaxCorr, MinCorr, LinReg, CCA, CKA. 
+    Example instances are MaxCorr, MinCorr, MaxLinReg, MinLinReg, CCA,
+    LinCKA.
     """
     def __init__(self, num_neurons_d, representations_d):
         self.num_neurons_d = num_neurons_d
@@ -470,7 +470,7 @@ def compute_correlations(self):
         return "cca"
 
 # https://debug-ml-iclr2019.github.io/cameraready/DebugML-19_paper_9.pdf
-class CKA(Method):
+class LinCKA(Method):
     def __init__(self, num_neurons_d, representations_d,
                  normalize_dimensions=True):
         super().__init__(num_neurons_d, representations_d)
@@ -491,12 +491,12 @@ class CKA(Method):
                 self.representations_d[network] = (t - means) / stdevs
 
         # Set `self.similarities`
-        # {network: {other: cka_similarity}}
+        # {network: {other: lincka_similarity}}
         self.similarities = {network: {} for network in
                              self.representations_d}
         for network, other_network in tqdm(p(self.representations_d,
                                              self.representations_d),
-                                           desc='cka',
+                                           desc='lincka',
                                            total=len(self.representations_d)**2):
 
             if network == other_network:
@@ -521,5 +521,5 @@ class CKA(Method):
         torch.save(self.similarities, output_file)
 
     def __str__(self):
-        return "cka"
+        return "lincka"
         

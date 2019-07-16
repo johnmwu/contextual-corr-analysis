@@ -1,6 +1,6 @@
 import argparse
 from corr_methods import (load_representations, MaxCorr, MinCorr,
-                          MaxLinReg, MinLinReg, CCA, CKA)
+                          MaxLinReg, MinLinReg, CCA, LinCKA)
 
 def get_options(opt_fname):
     if opt_fname == None:
@@ -43,7 +43,7 @@ def get_method_l(methods, num_neurons_d, representations_d):
             MaxLinReg(num_neurons_d, representations_d),
             MinLinReg(num_neurons_d, representations_d),
             CCA(num_neurons_d, representations_d),
-            CKA(num_neurons_d, representations_d),
+            LinCKA(num_neurons_d, representations_d),
             ]
     else:
         method_l = []
@@ -58,8 +58,8 @@ def get_method_l(methods, num_neurons_d, representations_d):
                 method_l.append(MinLinReg(num_neurons_d, representations_d))
             elif method == 'cca':
                 method_l.append(CCA(num_neurons_d, representations_d))
-            elif method == 'cka':
-                method_l.append(CKA(num_neurons_d, representations_d))
+            elif method == 'lincka':
+                method_l.append(LinCKA(num_neurons_d, representations_d))
 
     return method_l
 
