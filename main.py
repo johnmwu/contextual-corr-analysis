@@ -1,3 +1,4 @@
+import torch
 import argparse
 from corr_methods import (load_representations, MaxCorr, MinCorr,
                           MaxLinReg, MinLinReg, CCA, LinCKA)
@@ -35,36 +36,41 @@ def get_options(opt_fname):
 
     return layerspec_l, first_half_only_l, second_half_only_l
 
-def get_method_l(methods, num_neurons_d, representations_d):
+def get_method_l(methods, num_neurons_d, representations_d, device):
     if 'all' in methods:
         method_l = [
-            MaxCorr(num_neurons_d, representations_d),
-            MinCorr(num_neurons_d, representations_d),
-            MaxLinReg(num_neurons_d, representations_d),
-            MinLinReg(num_neurons_d, representations_d),
-            CCA(num_neurons_d, representations_d),
-            LinCKA(num_neurons_d, representations_d),
+            MaxCorr(num_neurons_d, representations_d, device),
+            MinCorr(num_neurons_d, representations_d, device),
+            MaxLinReg(num_neurons_d, representations_d, device),
+            MinLinReg(num_neurons_d, representations_d, device),
+            CCA(num_neurons_d, representations_d, device),
+            LinCKA(num_neurons_d, representations_d, device),
             ]
     else:
         method_l = []
         for method in methods:
             if method == 'maxcorr':
-                method_l.append(MaxCorr(num_neurons_d, representations_d))
+                method_l.append(MaxCorr(num_neurons_d, representations_d, device))
             elif method == 'mincorr':
-                method_l.append(MinCorr(num_neurons_d, representations_d))
+                method_l.append(MinCorr(num_neurons_d, representations_d, device))
             elif method == 'maxlinreg':
-                method_l.append(MaxLinReg(num_neurons_d, representations_d))
+                method_l.append(MaxLinReg(num_neurons_d, representations_d, device))
             elif method == 'minlinreg':
-                method_l.append(MinLinReg(num_neurons_d, representations_d))
+                method_l.append(MinLinReg(num_neurons_d, representations_d, device))
             elif method == 'cca':
-                method_l.append(CCA(num_neurons_d, representations_d))
+                method_l.append(CCA(num_neurons_d, representations_d, device))
             elif method == 'lincka':
-                method_l.append(LinCKA(num_neurons_d, representations_d))
+                method_l.append(LinCKA(num_neurons_d, representations_d, device))
 
     return method_l
 
 def main(methods, representation_files, output_file, opt_fname=None,
          limit=None, disable_cuda=False):
+
+    if not disable_cuda and torch.cuda.is_available():
+        device = torch.device('cuda')
+    else:
+        device = torch.device('cpu')
 
     # Set `representation_fname_l`, and options
     with open(representation_files) as f:
@@ -76,11 +82,11 @@ def main(methods, representation_files, output_file, opt_fname=None,
     print("Loading representations")
     num_neurons_d, representations_d = load_representations(representation_fname_l, limit=limit,
                                                             layerspec_l=layerspec_l, first_half_only_l=first_half_only_l,
-                                                            second_half_only_l=second_half_only_l, disable_cuda=disable_cuda)
+                                                            second_half_only_l=second_half_only_l)
     
     # Set `method_l`, list of Method objects
     print('\nInitializing methods ' + str(methods))
-    method_l = get_method_l(methods, num_neurons_d, representations_d)
+    method_l = get_method_l(methods, num_neurons_d, representations_d, device)
 
     # Run all methods in method_l
     print('\nComputing correlations')
@@ -91,8 +97,7 @@ def main(methods, representation_files, output_file, opt_fname=None,
     print('\nWriting correlations')
     for method in method_l:
         print('For method: ', str(method))
-        out_fname = (output_file + '_' + str(method) if len(method_l) > 1
-                     else output_file)
+        out_fname = output_file + '_' + str(method)
         method.write_correlations(out_fname)
 
 if __name__ == '__main__':
