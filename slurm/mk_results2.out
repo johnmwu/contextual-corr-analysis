@@ -1,0 +1,41 @@
+(jmw0) johnmwu@sls-510-1:/usr/users/johnmwu/contextual-corr-analysis/slurm$ srun mk_results2.sh --gres=gpu:2 --partition=2080 --mem=24GB
+loading: 100%|██████████| 4/4 [08:35<00:00, 130.84s/it]
+mu, sigma: 100%|██████████| 4/4 [00:02<00:00,  1.60it/s]
+correlate: 100%|██████████| 16/16 [00:09<00:00,  1.63it/s]
+self.clusters: 100%|██████████| 4/4 [00:06<00:00,  1.72s/it]
+annotation: 100%|██████████| 4/4 [00:00<00:00, 225.28it/s]
+mu, sigma: 100%|██████████| 4/4 [00:02<00:00,  1.77it/s]
+correlate: 100%|██████████| 16/16 [00:09<00:00,  1.61it/s]
+self.clusters: 100%|██████████| 4/4 [00:07<00:00,  1.80s/it]
+annotation: 100%|██████████| 4/4 [00:00<00:00, 232.63it/s]
+mu, sigma: 100%|██████████| 4/4 [00:03<00:00,  1.22it/s]
+correlate: 100%|██████████| 16/16 [02:58<00:00, 11.16s/it]
+annotation: 100%|██████████| 4/4 [00:00<00:00, 10.24it/s]
+pca: 100%|██████████| 4/4 [00:50<00:00, 12.72s/it]
+cca: 100%|██████████| 16/16 [00:09<00:00,  1.63it/s]
+mu, sigma: 100%|██████████| 4/4 [00:04<00:00,  1.16s/it]
+cka: 100%|██████████| 16/16 [00:27<00:00,  1.73s/it]
+write: 100%|██████████| 4/4 [00:00<00:00, 100.85it/s]
+write: 100%|██████████| 4/4 [00:00<00:00, 80.22it/s]
+write: 100%|██████████| 4/4 [00:00<00:00, 27.18it/s]Loading representations
+
+Initializing method all
+
+Computing correlations
+For method:  maxcorr
+For method:  mincorr
+For method:  linreg
+For method:  svcca
+For network /data/sls/temp/belinkov/contextual-corr-analysis/contextualizers/openai_transformer/ptb_pos_dev.hdf5 wanted size is 700
+For network /data/sls/temp/belinkov/contextual-corr-analysis/contextualizers/bert_base_cased/ptb_pos_dev.hdf5 wanted size is 696
+For network /data/sls/temp/belinkov/contextual-corr-analysis/contextualizers/elmo_original/ptb_pos_dev.hdf5 wanted size is 951
+For network /data/sls/temp/belinkov/contextual-corr-analysis/contextualizers/calypso_transformer_6_512_base/ptb_pos_dev.hdf5 wanted size is 900
+For method:  cka
+
+Writing correlations
+For method:  maxcorr
+For method:  mincorr
+For method:  linreg
+For method:  svcca
+For method:  cka
+

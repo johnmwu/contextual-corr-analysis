@@ -84,6 +84,8 @@
   Will PyTorch tensor operations automatically use the GPU if one is available?
   If not, then should I add this default to the code?
 * Misc
+- I don't think these can even run on CUDA.. CUDA does not have 30GiB of
+  mem..
 - [X] As it is (Mon Jun 17 12:41:34 EDT 2019), the data will be loaded
   on each call of the script. As far as I can tell, the data loading is
   a significant portion of the runtime, so this may not be the
