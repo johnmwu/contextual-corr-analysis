@@ -1,5 +1,7 @@
 .*
 !.gitignore
+
+temp
 __pycache__
 .ipynb_checkpoints
 \#*
