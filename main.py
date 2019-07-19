@@ -1,7 +1,7 @@
 import torch
 import argparse
 from corr_methods import (load_representations, MaxCorr, MinCorr,
-                          MaxLinReg, MinLinReg, CCA, LinCKA)
+                          MaxLinReg, MinLinReg, CCA, LinCKA, RBFCKA)
 
 def get_options(opt_fname):
     if opt_fname == None:
@@ -45,6 +45,7 @@ def get_method_l(methods, num_neurons_d, representations_d, device):
             MinLinReg(num_neurons_d, representations_d, device),
             CCA(num_neurons_d, representations_d, device),
             LinCKA(num_neurons_d, representations_d, device),
+            RBFCKA(num_neurons_d, representations_d, device),
             ]
     else:
         method_l = []
@@ -61,6 +62,8 @@ def get_method_l(methods, num_neurons_d, representations_d, device):
                 method_l.append(CCA(num_neurons_d, representations_d, device))
             elif method == 'lincka':
                 method_l.append(LinCKA(num_neurons_d, representations_d, device))
+            elif method == 'rbfcka':
+                method_l.append(RBFCKA(num_neurons_d, representations_d, device))
 
     return method_l
 

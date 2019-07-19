@@ -5,6 +5,8 @@ huge difference. GPU doesn't seem to do SVD better..
 
 These results are logged in the jobhistory
 
+Oops. These are wrong. 
+
 maxlinreg
 correlate: 100%|██████████| 4356/4356 [5:11:14<00:00,  4.29s/it]
 correlate: 100%|██████████| 4356/4356 [5:09:43<00:00,  4.27s/it]

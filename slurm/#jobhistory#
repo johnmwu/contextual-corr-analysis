@@ -10,9 +10,6 @@
 [4]-  Done                    srun --mem=98GB --gres=gpu:1 --cpus-per-task=4 --partition=1080 --output=/data/sls/temp/johnmwu/contextual-corr-analysis/mk_results7-cca2.out mk_results7-cca.sh
 [5]+  Done                    srun --mem=98GB --gres=gpu:1 --cpus-per-task=4 --partition=1080 --output=/data/sls/temp/johnmwu/contextual-corr-analysis/mk_results7-lincka2.out mk_results7-lincka.sh
 
-[1]   Running                 srun --mem=98GB --cpus-per-task=4 --gres=gpu:1 --partition=2080 --output=/data/sls/temp/johnmwu/contextual-corr-analysis/mk_results8-mincorr1.out mk_results8-mincorr.sh &
-[2]   Running                 srun --mem=98GB --cpus-per-task=4 --gres=gpu:1 --partition=2080 --output=/data/sls/temp/johnmwu/contextual-corr-analysis/mk_results8-maxcorr1.out mk_results8-maxcorr.sh &
-[3]   Running                 srun --mem=140GB --cpus-per-task=4 --gres=gpu:1 --partition=2080 --output=/data/sls/temp/johnmwu/contextual-corr-analysis/mk_results8-maxlinreg1.out mk_results8-maxlinreg.sh &
-[4]   Running                 srun --mem=140GB --cpus-per-task=4 --gres=gpu:1 --partition=2080 --output=/data/sls/temp/johnmwu/contextual-corr-analysis/mk_results8-minlinreg1.out mk_results8-minlinreg.sh &
-[5]-  Done                    srun --mem=47GB --cpus-per-task=4 --gres=gpu:1 --partition=2080 --output=/data/sls/temp/johnmwu/contextual-corr-analysis/mk_results8-lincka1.out mk_results8-lincka.sh
-[6]+  Running                 srun --mem=140GB --cpus-per-task=4 --gres=gpu:1 --partition=2080 --output=/data/sls/temp/johnmwu/contextual-corr-analysis/mk_results8-cca1.out mk_results8-cca.sh &
+srun --mem=40GB --gres=gpu:1 --cpus-per-task=4 --partition=2080 --output=/data/sls/temp/johnmwu/contextual-corr-analysis/mk_results7-lincka2.out mk_results7-lincka.sh
+
+

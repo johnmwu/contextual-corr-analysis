@@ -411,14 +411,17 @@ class CCA(Method):
             X = pca_directions[network].to(self.device)
             Y = pca_directions[other_network].to(self.device)
 
+            trans_X = whitening_transforms[network].to(self.device)
+            trans_Y = whitening_transforms[other_network].to(self.device)
+
             # Perform SVD for CCA.
             # u s vt = Xt Y
             # s = ut Xt Y v
             u, s, v = torch.svd(torch.mm(X.t(), Y))
 
             # `self.transforms`, `self.corrs`, `self.sv_similarities`
-            self.transforms[network][other_network] = torch.mm(whitening_transforms[network], u).cpu()
-            self.transforms[other_network][network] = torch.mm(whitening_transforms[other_network], v).cpu()
+            self.transforms[network][other_network] = torch.mm(trans_X, u).cpu()
+            self.transforms[other_network][network] = torch.mm(trans_Y, v).cpu()
 
             self.corrs[network][other_network] = s.cpu()
             self.corrs[other_network][network] = s.cpu()
@@ -426,8 +429,8 @@ class CCA(Method):
             self.sv_similarities[network][other_network] = s.mean().item()
             self.sv_similarities[other_network][network] = s.mean().item()
 
-            # Compute `self.pw_similarities`. See https://arxiv.org/abs/1806.05759
-            # This is not symmetric
+            # Compute `self.pw_similarities`. See https://arxiv.org/abs/1806.05759. 
+            # This is not symmetric. 
 
             # For X
             H = torch.mm(X, u)
@@ -435,7 +438,7 @@ class CCA(Method):
             align = torch.abs(torch.mm(H.t(), Z))
             a = torch.sum(align, dim=1, keepdim=False)
             a = a / torch.sum(a)
-            self.pw_similarities[network][other_network] = torch.sum(s*a).item()
+            self.pw_similarities[network][other_network] = torch.sum(s*a).cpu().item()
 
             # For Y
             H = torch.mm(Y, v)
@@ -443,7 +446,7 @@ class CCA(Method):
             align = torch.abs(torch.mm(H.t(), Z))
             a = torch.sum(align, dim=1, keepdim=False)
             a = a / torch.sum(a)
-            self.pw_similarities[other_network][network] = torch.sum(s*a).item()
+            self.pw_similarities[other_network][network] = torch.sum(s*a).cpu().item()
 
     def write_correlations(self, output_file):
         if self.save_cca_transforms:
@@ -464,10 +467,11 @@ class CCA(Method):
     def __str__(self):
         return "cca"
 
-# https://debug-ml-iclr2019.github.io/cameraready/DebugML-19_paper_9.pdf
+# https://arxiv.org/abs/1905.00414
 class LinCKA(Method):
     def __init__(self, num_neurons_d, representations_d, device=None,
                  normalize_dimensions=True):
+        # Here, normalize_dimensions means center. TODO: change. 
         super().__init__(num_neurons_d, representations_d, device)
         self.normalize_dimensions = normalize_dimensions
 
@@ -475,15 +479,13 @@ class LinCKA(Method):
         """
         Set `self.similarities`. 
         """
-        # Normalize
+        # Center
         if self.normalize_dimensions:
             for network in tqdm(self.representations_d, desc='mu, sigma'):
-                # TODO: might not need to normalize, only center
                 t = self.representations_d[network]
                 means = t.mean(0, keepdim=True)
-                stdevs = t.std(0, keepdim=True)
 
-                self.representations_d[network] = (t - means) / stdevs
+                self.representations_d[network] = t - means
 
         # Set `self.similarities`
         # {network: {other: lincka_similarity}}
@@ -517,4 +519,65 @@ class LinCKA(Method):
 
     def __str__(self):
         return "lincka"
+        
+
+class RBFCKA(Method):
+    def __init__(self, num_neurons_d, representations_d, device=None,
+                 limit=10_000):
+        super().__init__(num_neurons_d, representations_d, device)
+        self.limit = limit
+
+
+    def compute_correlations(self):
+        def center_gram(G):
+            means = G.mean(0, keepdim=False)
+            means -= means.mean() / 2
+            return G - means[None, :] - means[:, None]
+
+        def gram_rbf(X, threshold=1.0):
+            dot_products = torch.mm(X, X.t())
+            sq_norms = torch.diag(dot_products)
+            sq_distances = -2*dot_products + sq_norms[:,None] + sq_norms[None,:]
+            sq_median_distance = torch.median(sq_distances)
+            return torch.exp(-sq_distances / (2*threshold**2 * sq_median_distance))
+        # Set `limit`
+        n_words = next(iter(self.representations_d.values())).size()[0]
+        if type(self.limit) == float:
+            limit = int(n_words * self.limit)
+        elif type(self.limit) == int:
+            limit = self.limit
+        else:
+            limit = self.limit
+
+        # Set `self.similarities`
+        # {network: {other: rbfcka_similarity}}
+        self.similarities = {network: {} for network in self.representations_d}
+        for network, other_network in tqdm(p(self.representations_d,
+                                             self.representations_d),
+                                           desc='rbfcka',
+                                           total=len(self.representations_d)**2):
+
+            if network == other_network:
+                continue
+
+            if other_network in self.similarities[network]: 
+                continue
+
+            # TO DO: random subset of data using limit?
+            Gx = center_gram(gram_rbf(self.representations_d[network][:limit]))
+            Gy = center_gram(gram_rbf(self.representations_d[other_network][:limit]))
+
+            scaled_hsic = torch.dot(Gx.view(-1), Gy.view(-1)).item()
+            norm_gx = torch.norm(Gx, p="fro").item()
+            norm_gy = torch.norm(Gy, p="fro").item()
+
+            sim = scaled_hsic / (norm_gx*norm_gy)
+            self.similarities[network][other_network] = sim
+            self.similarities[other_network][network] = sim
+
+    def write_correlations(self, output_file):
+        torch.save(self.similarities, output_file)
+
+    def __str__(self):
+        return "rbfcka"
         

@@ -84,6 +84,23 @@
   Will PyTorch tensor operations automatically use the GPU if one is available?
   If not, then should I add this default to the code?
 * Misc
+- Currently, my rule of thumb is that everything saved should be on the CPU. 
+- RBF CKA on entire dataset runs out of memory..
+  
+  Ran on Thu Jul 18 18:44:49 EDT 2019
+  Computing correlations
+  For method:  <corr_methods.RBFCKA object at 0x7f9056156f60>
+  Traceback (most recent call last):
+    File "../main.py", line 118, in <module>
+      disable_cuda=args.disable_cuda) 
+    File "../main.py", line 98, in main
+      method.compute_correlations()
+    File "/data/sls/u/urop/johnmwu/contextual-corr-analysis/corr_methods.py", line 564, in compute_correlations
+      Gx = center_gram(gram_rbf(self.representations_d[network][:limit]))
+    File "/data/sls/u/urop/johnmwu/contextual-corr-analysis/corr_methods.py", line 539, in gram_rbf
+      return torch.exp(-sq_distances / (2*threshold**2 * sq_median_distance))
+  RuntimeError: [enforce fail at CPUAllocator.cpp:56] posix_memalign(&data, gAlignment, nbytes) == 0. 12 vs 0
+
 - I don't think these can even run on CUDA.. CUDA does not have 30GiB of
   mem..
 - [X] As it is (Mon Jun 17 12:41:34 EDT 2019), the data will be loaded
