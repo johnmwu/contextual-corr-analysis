@@ -563,13 +563,16 @@ class RBFCKA(Method):
             if other_network in self.similarities[network]: 
                 continue
 
-            # TO DO: random subset of data using limit?
-            Gx = center_gram(gram_rbf(self.representations_d[network][:limit]))
-            Gy = center_gram(gram_rbf(self.representations_d[other_network][:limit]))
+            X = self.representations_d[network][:limit].to(device)
+            Y = self.representations_d[network][:limit].to(device)
 
-            scaled_hsic = torch.dot(Gx.view(-1), Gy.view(-1)).item()
-            norm_gx = torch.norm(Gx, p="fro").item()
-            norm_gy = torch.norm(Gy, p="fro").item()
+            # TO DO: random subset of data using limit?
+            Gx = center_gram(gram_rbf(X))
+            Gy = center_gram(gram_rbf(Y))
+
+            scaled_hsic = torch.dot(Gx.view(-1), Gy.view(-1)).cpu().item()
+            norm_gx = torch.norm(Gx, p="fro").cpu().item()
+            norm_gy = torch.norm(Gy, p="fro").cpu().item()
 
             sim = scaled_hsic / (norm_gx*norm_gy)
             self.similarities[network][other_network] = sim
