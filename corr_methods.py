@@ -65,7 +65,12 @@ def load_representations(representation_fname_l, limit=None,
         s = activations_h5[indices[0]].shape
         num_layers = 1 if len(s)==2 else s[0]
         num_neurons = s[-1]
-        layers = list(range(num_layers)) if layerspec=="all" else [layerspec]
+        if layerspec == "all":
+            layers = list(range(num_layers))
+        elif layerspec == "full":
+            layers = ["full"]
+        else:
+            layers = [layerspec]
 
         # Set `num_neurons_d`, `representations_d`
         for layer in layers:
@@ -80,8 +85,15 @@ def load_representations(representation_fname_l, limit=None,
                                      str(activations_h5[sentence_ix].shape))
 
                 # Create `activations`
-                activations = torch.FloatTensor(activations_h5[sentence_ix][layer] if dim==3 
-                                                else activations_h5[sentence_ix])
+                if layer == "full":
+                    activations = torch.FloatTensor(activations_h5[sentence_ix])
+                    if dim == 3:
+                        activations = activations.permute(1, 0, 2)
+                        nword = activations.size()[0]
+                        activations = activations.contiguous().view(nword, -1)
+                else:
+                    activations = torch.FloatTensor(activations_h5[sentence_ix][layer] if dim==3 
+                                                        else activations_h5[sentence_ix])
 
                 # Create `representations`
                 representations = activations
@@ -97,7 +109,7 @@ def load_representations(representation_fname_l, limit=None,
             # update
             model_name = "{model}_{layer}".format(model=fname2mname(fname), 
                                                   layer=layer)
-            num_neurons_d[model_name] = num_neurons
+            num_neurons_d[model_name] = representations_l[0].size()[-1]
             representations_d[model_name] = torch.cat(representations_l)
 
     return (num_neurons_d, representations_d)
@@ -563,6 +575,7 @@ class RBFCKA(Method):
             if other_network in self.similarities[network]: 
                 continue
 
+            device = self.device
             X = self.representations_d[network][:limit].to(device)
             Y = self.representations_d[network][:limit].to(device)
 
