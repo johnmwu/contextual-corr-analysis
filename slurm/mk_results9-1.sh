@@ -1,6 +1,6 @@
 #!/bin/bash
 
-results="/data/sls/temp/johnmwu/contextual-corr-analysis/results9"
+results="/data/sls/temp/johnmwu/contextual-corr-analysis/results9-1"
 repr_files="repr_files1"
 opt_fname="opt1"
 

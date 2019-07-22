@@ -5,6 +5,7 @@ import json
 import numpy as np
 import h5py
 from os.path import basename, dirname
+import dask.array as da
 
 def load_representations(representation_fname_l, limit=None,
                          layerspec_l=None, first_half_only_l=False,
@@ -535,23 +536,12 @@ class LinCKA(Method):
 
 class RBFCKA(Method):
     def __init__(self, num_neurons_d, representations_d, device=None,
-                 limit=10_000):
+                 limit=None, dask_chunk_size=50_000):
         super().__init__(num_neurons_d, representations_d, device)
         self.limit = limit
-
+        self.dask_chunk_size = dask_chunk_size
 
     def compute_correlations(self):
-        def center_gram(G):
-            means = G.mean(0, keepdim=False)
-            means -= means.mean() / 2
-            return G - means[None, :] - means[:, None]
-
-        def gram_rbf(X, threshold=1.0):
-            dot_products = torch.mm(X, X.t())
-            sq_norms = torch.diag(dot_products)
-            sq_distances = -2*dot_products + sq_norms[:,None] + sq_norms[None,:]
-            sq_median_distance = torch.median(sq_distances)
-            return torch.exp(-sq_distances / (2*threshold**2 * sq_median_distance))
         # Set `limit`
         n_words = next(iter(self.representations_d.values())).size()[0]
         if type(self.limit) == float:
@@ -560,6 +550,10 @@ class RBFCKA(Method):
             limit = self.limit
         else:
             limit = self.limit
+
+        # Set `daskp`. "Dask predicate". 
+        # Logic could become more complex. It could also be removed. 
+        daskp = True if self.device == torch.device('cpu') else False
 
         # Set `self.similarities`
         # {network: {other: rbfcka_similarity}}
@@ -575,21 +569,37 @@ class RBFCKA(Method):
             if other_network in self.similarities[network]: 
                 continue
 
-            device = self.device
-            X = self.representations_d[network][:limit].to(device)
-            Y = self.representations_d[network][:limit].to(device)
+            if daskp:
+                c = self.dask_chunk_size
+                X = da.from_array(np.asarray(self.representations_d[network][:limit]), chunks=(c, c))
+                Y = da.from_array(np.asarray(self.representations_d[other_network][:limit]), chunks=(c, c))
 
-            # TO DO: random subset of data using limit?
-            Gx = center_gram(gram_rbf(X))
-            Gy = center_gram(gram_rbf(Y))
+                Gx = center_gram(gram_rbf(X))
+                Gy = center_gram(gram_rbf(Y))
 
-            scaled_hsic = torch.dot(Gx.view(-1), Gy.view(-1)).cpu().item()
-            norm_gx = torch.norm(Gx, p="fro").cpu().item()
-            norm_gy = torch.norm(Gy, p="fro").cpu().item()
+                scaled_hsic = da.dot(Gx.ravel(), Gy.ravel())
+                norm_gx = da.sqrt(da.dot(Gx.ravel(), Gx.ravel()))
+                norm_gy = da.sqrt(da.dot(Gy.ravel(), Gy.ravel()))
 
-            sim = scaled_hsic / (norm_gx*norm_gy)
+                sim = (scaled_hsic / (norm_gx*norm_gy)).compute()
+            else:
+                device = self.device
+                X = self.representations_d[network][:limit].to(device)
+                Y = self.representations_d[other_network][:limit].to(device)
+
+                # TO DO: random subset of data using limit?
+                Gx = center_gram(gram_rbf(X))
+                Gy = center_gram(gram_rbf(Y))
+
+                scaled_hsic = torch.dot(Gx.view(-1), Gy.view(-1)).cpu().item()
+                norm_gx = torch.norm(Gx, p="fro").cpu().item()
+                norm_gy = torch.norm(Gy, p="fro").cpu().item()
+
+                sim = scaled_hsic / (norm_gx*norm_gy)
+
             self.similarities[network][other_network] = sim
             self.similarities[other_network][network] = sim
+
 
     def write_correlations(self, output_file):
         torch.save(self.similarities, output_file)

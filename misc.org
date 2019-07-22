@@ -84,6 +84,13 @@
   Will PyTorch tensor operations automatically use the GPU if one is available?
   If not, then should I add this default to the code?
 * Misc
+- Allocation of 32 cores on a 630 machine
+  
+  Mon Jul 22 19:02:11 EDT 2019
+  - According to =top=, rbfcka is indeed using multiple cores. The cpu
+    usage seems to fluctuate from 1000 - 1800% cpu usage. This is on the
+    cpu without using dask.
+  - Thus, not sure if the allocation of 32 cores is entirely necessary.
 - Currently, my rule of thumb is that everything saved should be on the CPU. 
 - RBF CKA on entire dataset runs out of memory..
   

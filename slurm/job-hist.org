@@ -17,4 +17,12 @@
 [5]-  Done                    srun --mem=47GB --cpus-per-task=4 --gres=gpu:1 --partition=2080 --output=/data/sls/temp/johnmwu/contextual-corr-analysis/mk_results8-lincka1.out mk_results8-lincka.sh
 [6]+  Running                 srun --mem=140GB --cpus-per-task=4 --gres=gpu:1 --partition=2080 --output=/data/sls/temp/johnmwu/contextual-corr-analysis/mk_results8-cca1.out mk_results8-cca.sh &
 
-srun --mem=90GB --cpus-per-task=4 --gres=gpu:1 --partition=2080 --output=/data/sls/temp/johnmwu/contextual-corr-analysis/mk_results8-rbfcka1.out mk_results8-rbfcka.sh &
+srun --mem=90GB --cpus-per-task=4 --gres=gpu:1 --partition=2080 --output=/data/sls/temp/johnmwu/contextual-corr-analysis/mk_results8-rbfcka1.out mk_results8-rbfcka.sh & STOPPED
+
+srun --mem=15GB --cpus-per-task=4 --gres=gpu:1 --partition=2080 --output=/data/sls/temp/johnmwu/contextual-corr-analysis/mk_results9-2.out mk_results9-1.sh & FAILED
+
+srun --mem=15GB --cpus-per-task=32 --partition=630 --output=/data/sls/temp/johnmwu/contextual-corr-analysis/mk_results9-1-1.out mk_results9-1.sh & 
+
+srun --mem=90GB --cpus-per-task=32 --partition=630 --output=/data/sls/temp/johnmwu/contextual-corr-analysis/mk_results8-rbfcka1.out mk_results8-rbfcka.sh &
+
+srun --mem=240GB --cpus-per-task=32 --partition=630 --output=/data/sls/temp/johnmwu/contextual-corr-analysis/mk_results10-1-1.out mk_results10-1.sh &

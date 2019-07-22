@@ -38,17 +38,17 @@ def get_options(opt_fname):
 
     return layerspec_l, first_half_only_l, second_half_only_l
 
-def get_method_l(methods, num_neurons_d, representations_d, device):
+def get_method_l(methods, num_neurons_d, representations_d, device,
+                 limit=None):
     if 'all' in methods:
-        method_l = [
-            MaxCorr(num_neurons_d, representations_d, device),
-            MinCorr(num_neurons_d, representations_d, device),
-            MaxLinReg(num_neurons_d, representations_d, device),
-            MinLinReg(num_neurons_d, representations_d, device),
-            CCA(num_neurons_d, representations_d, device),
-            LinCKA(num_neurons_d, representations_d, device),
-            RBFCKA(num_neurons_d, representations_d, device),
-            ]
+        method_l = [ MaxCorr(num_neurons_d, representations_d, device),
+                     MinCorr(num_neurons_d, representations_d, device),
+                     MaxLinReg(num_neurons_d, representations_d, device),
+                     MinLinReg(num_neurons_d, representations_d, device),
+                     CCA(num_neurons_d, representations_d, device),
+                     LinCKA(num_neurons_d, representations_d, device),
+                     RBFCKA(num_neurons_d, representations_d, device,
+                            limit=limit), ]
     else:
         method_l = []
         for method in methods:
@@ -65,7 +65,8 @@ def get_method_l(methods, num_neurons_d, representations_d, device):
             elif method == 'lincka':
                 method_l.append(LinCKA(num_neurons_d, representations_d, device))
             elif method == 'rbfcka':
-                method_l.append(RBFCKA(num_neurons_d, representations_d, device))
+                method_l.append(RBFCKA(num_neurons_d, representations_d,
+                                       device, limit=limit))
 
     return method_l
 
@@ -91,7 +92,8 @@ def main(methods, representation_files, output_file, opt_fname=None,
     
     # Set `method_l`, list of Method objects
     print('\nInitializing methods ' + str(methods))
-    method_l = get_method_l(methods, num_neurons_d, representations_d, device)
+    method_l = get_method_l(methods, num_neurons_d, representations_d,
+                            device, limit=limit)
 
     # Run all methods in method_l
     print('\nComputing correlations')
