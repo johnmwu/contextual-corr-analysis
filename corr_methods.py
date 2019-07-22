@@ -562,14 +562,15 @@ class RBFCKA(Method):
                 return da.exp((-sq_distances / (2*threshold**2 * sq_median_distance)))
             else:
                 raise ValueError
-            # Set `limit`
-            n_words = next(iter(self.representations_d.values())).size()[0]
-            if type(self.limit) == float:
-                limit = int(n_words * self.limit)
-            elif type(self.limit) == int:
-                limit = self.limit
-            else:
-                limit = self.limit
+
+        # Set `limit`
+        n_words = next(iter(self.representations_d.values())).size()[0]
+        if type(self.limit) == float:
+            limit = int(n_words * self.limit)
+        elif type(self.limit) == int:
+            limit = self.limit
+        else:
+            limit = self.limit
 
         # Set `daskp`
         # Logic could become more complex
@@ -619,6 +620,7 @@ class RBFCKA(Method):
 
             self.similarities[network][other_network] = sim
             self.similarities[other_network][network] = sim
+
 
     def write_correlations(self, output_file):
         torch.save(self.similarities, output_file)
