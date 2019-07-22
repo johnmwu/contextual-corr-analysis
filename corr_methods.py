@@ -489,6 +489,94 @@ class LinCKA(Method):
         self.normalize_dimensions = normalize_dimensions
 
     def compute_correlations(self):
+        def center_gram(G):
+            means = G.mean(0)
+            means -= means.mean() / 2
+            return G - means[None, :] - means[:, None]
+
+        def gram_rbf(X, threshold=1.0):
+            if type(X) == torch.Tensor:
+                dot_products = X @ X.t()
+                sq_norms = dot_products.diag()
+                sq_distances = -2*dot_products + sq_norms[:,None] + sq_norms[None,:]
+                sq_median_distance = sq_distances.median()
+                return torch.exp(-sq_distances / (2*threshold**2 * sq_median_distance))
+            elif type(X) == da.Array:
+                dot_products = X @ X.T
+                sq_norms = da.diag(dot_products)
+                sq_distances = -2*dot_products + sq_norms[:,None] + sq_norms[None,:]
+                sq_median_distance = da.percentile(sq_distances.ravel(), 50)
+                return da.exp((-sq_distances / (2*threshold**2 * sq_median_distance)))
+            else:
+                raise ValueError
+
+        # Set `limit`
+        n_words = next(iter(self.representations_d.values())).size()[0]
+        if type(self.limit) == float:
+            limit = int(n_words * self.limit)
+        elif type(self.limit) == int:
+            limit = self.limit
+        else:
+            limit = self.limit
+
+        # Set `daskp`
+        # Logic could become more complex
+        daskp = True if self.device == torch.device('cpu') else False
+
+        # dask setup
+        if daskp:
+            from dask.distributed import Client, progress
+            client = Client(processes=False, threads_per_worker=32, n_workers=1, memory_limit='200GB')
+
+        # Set `self.similarities`
+        # {network: {other: rbfcka_similarity}}
+        self.similarities = {network: {} for network in self.representations_d}
+        for network, other_network in tqdm(p(self.representations_d,
+                                             self.representations_d),
+                                           desc='rbfcka',
+                                           total=len(self.representations_d)**2):
+
+            if network == other_network:
+                continue
+
+            if other_network in self.similarities[network]: 
+                continue
+
+            if daskp:
+                c = self.dask_chunk_size
+                X = da.from_array(np.asarray(self.representations_d[network][:limit]), chunks=(c, c))
+                Y = da.from_array(np.asarray(self.representations_d[other_network][:limit]), chunks=(c, c))
+
+                Gx = center_gram(gram_rbf(X))
+                Gy = center_gram(gram_rbf(Y))
+
+                scaled_hsic = da.dot(Gx.ravel(), Gy.ravel())
+                norm_gx = da.sqrt(da.dot(Gx.ravel(), Gx.ravel()))
+                norm_gy = da.sqrt(da.dot(Gy.ravel(), Gy.ravel()))
+
+                sim = (scaled_hsic / (norm_gx*norm_gy)).compute()
+            else:
+                device = self.device
+                X = self.representations_d[network][:limit].to(device)
+                Y = self.representations_d[other_network][:limit].to(device)
+
+                # TO DO: random subset of data using limit?
+                Gx = center_gram(gram_rbf(X))
+                Gy = center_gram(gram_rbf(Y))
+
+                scaled_hsic = torch.dot(Gx.view(-1), Gy.view(-1)).cpu().item()
+                norm_gx = torch.norm(Gx, p="fro").cpu().item()
+                norm_gy = torch.norm(Gy, p="fro").cpu().item()
+
+                sim = scaled_hsic / (norm_gx*norm_gy)
+
+            self.similarities[network][other_network] = sim
+            self.similarities[other_network][network] = sim
+
+
+
+
+    def compute_correlations(self):
         """
         Set `self.similarities`. 
         """
@@ -575,6 +663,12 @@ class RBFCKA(Method):
         # Set `daskp`
         # Logic could become more complex
         daskp = True if self.device == torch.device('cpu') else False
+
+        # dask setup
+        if daskp:
+            from dask.distributed import Client, progress
+            client = Client(processes=False, threads_per_worker=32, n_workers=1,
+                            memory_limit='200GB')
 
         # Set `self.similarities`
         # {network: {other: rbfcka_similarity}}
