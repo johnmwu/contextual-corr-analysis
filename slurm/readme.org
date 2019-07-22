@@ -12,5 +12,7 @@ following meanings are associated with job numbers:
    
    In general, superseded by 8. 
 8. All layers, all models, all methods. 
-9. Test for RBF using default limit (10000)
-10. 
+   
+   Incomplete as of Mon Jul 22 19:10:43 EDT 2019
+9. Test for RBF using limit 10000
+10. Test RBF using no limit

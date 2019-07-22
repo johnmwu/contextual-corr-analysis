@@ -542,17 +542,37 @@ class RBFCKA(Method):
         self.dask_chunk_size = dask_chunk_size
 
     def compute_correlations(self):
-        # Set `limit`
-        n_words = next(iter(self.representations_d.values())).size()[0]
-        if type(self.limit) == float:
-            limit = int(n_words * self.limit)
-        elif type(self.limit) == int:
-            limit = self.limit
-        else:
-            limit = self.limit
+        def center_gram(G):
+            means = G.mean(0)
+            means -= means.mean() / 2
+            return G - means[None, :] - means[:, None]
 
-        # Set `daskp`. "Dask predicate". 
-        # Logic could become more complex. It could also be removed. 
+        def gram_rbf(X, threshold=1.0):
+            if type(X) == torch.Tensor:
+                dot_products = X @ X.t()
+                sq_norms = dot_products.diag()
+                sq_distances = -2*dot_products + sq_norms[:,None] + sq_norms[None,:]
+                sq_median_distance = sq_distances.median()
+                return torch.exp(-sq_distances / (2*threshold**2 * sq_median_distance))
+            elif type(X) == da.Array:
+                dot_products = X @ X.T
+                sq_norms = da.diag(dot_products)
+                sq_distances = -2*dot_products + sq_norms[:,None] + sq_norms[None,:]
+                sq_median_distance = da.percentile(sq_distances.ravel(), 50)
+                return da.exp((-sq_distances / (2*threshold**2 * sq_median_distance)))
+            else:
+                raise ValueError
+            # Set `limit`
+            n_words = next(iter(self.representations_d.values())).size()[0]
+            if type(self.limit) == float:
+                limit = int(n_words * self.limit)
+            elif type(self.limit) == int:
+                limit = self.limit
+            else:
+                limit = self.limit
+
+        # Set `daskp`
+        # Logic could become more complex
         daskp = True if self.device == torch.device('cpu') else False
 
         # Set `self.similarities`
@@ -599,7 +619,6 @@ class RBFCKA(Method):
 
             self.similarities[network][other_network] = sim
             self.similarities[other_network][network] = sim
-
 
     def write_correlations(self, output_file):
         torch.save(self.similarities, output_file)
