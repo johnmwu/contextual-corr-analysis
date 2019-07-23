@@ -1,6 +1,7 @@
 #!/bin/bash
 
-# Note: this is using an old main.py
+results="/data/sls/temp/johnmwu/contextual-corr-analysis/results1"
+repr_files="repr_files8" # add xlnet
+opt_fname="opt1"
 
-results1="/data/sls/temp/johnmwu/contextual-corr-analysis/results1"
-python ../main.py all repr_files1 "${results1}"
+python ../main.py "${repr_files}" "${results}" --opt_fname "${opt_fname}" --methods mincorr maxcorr minlinreg maxlinreg cca lincka

@@ -1,0 +1,16 @@
+Each runnable job is named =mk_results*=. The * consists of a number,
+followed by some extra stuff. That number is the job number. The
+following meanings are associated with job numbers:
+
+1. Last layers, all models, all methods (except rbf cka)
+2. 
+3. 
+4. 
+5. 
+6. 
+7. All layers, 6 orig models (no xlnet), corrs linregs lincka cca
+   
+   In general, superseded by 8. 
+8. All layers, all models, all methods. 
+9. Test for RBF using default limit (10000)
+10. 
