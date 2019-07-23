@@ -1,5 +1,7 @@
 .*
 !.gitignore
+*.*~
+*/*.*~
 
 temp
 __pycache__
