@@ -1,10 +1,11 @@
 import torch
-from pytorch_transformers import XLNetTokenizer, XLNetModel
+from pytorch_transformers import XLNetTokenizer, XLNetModel, GPT2Tokenizer, GPT2Model
 
 import h5py
 import json
 import numpy as np
 from tqdm import tqdm
+import sys
 
 disable_cuda = False
 if not disable_cuda and torch.cuda.is_available():
@@ -12,16 +13,25 @@ if not disable_cuda and torch.cuda.is_available():
 else:
     device = torch.device('cpu')
 
-SPIECE_UNDERLINE = u'▁'
 
-model = XLNetModel.from_pretrained('xlnet-large-cased', output_hidden_states=True).to(device)
-tokenizer = XLNetTokenizer.from_pretrained('xlnet-large-cased')
+def get_model_and_tokenizer(model_name):
 
-hdf5_filename = '/data/sls/temp/belinkov/contextual-corr-analysis/contextualizers/elmo_original/ptb_pos_dev.hdf5'
-output_file_path = '/data/sls/temp/belinkov/contextual-corr-analysis/contextualizers/xlnet_large_cased/ptb_pos_dev.hdf5'
+    if model_name.startswith('xlnet'):
+        model = XLNetModel.from_pretrained(model_name, output_hidden_states=True).to(device)
+        tokenizer = XLNetTokenizer.from_pretrained(model_name)    
+        sep = u'▁'
+    elif model_name.startswith('gpt2'):
+        model = GPT2Model.from_pretrained(model_name, output_hidden_states=True).to(device)
+        tokenizer = GPT2Tokenizer.from_pretrained(model_name)
+        sep = 'Ġ'
+    else:
+        print('Unrecognized model name:', model_name)
+        sys.exit()
+
+    return model, tokenizer, sep
 
 # this follows the HuggingFace API for pytorch-transformers
-def get_sentence_repr(sentence, model, tokenizer):
+def get_sentence_repr(sentence, model, tokenizer, sep):
     """
     Get representations for one sentence
     """
@@ -42,7 +52,7 @@ def get_sentence_repr(sentence, model, tokenizer):
     # if next token is a new word, take current token's representation
     #print(segmented_tokens)
     for i in range(len(segmented_tokens)-1):
-        if segmented_tokens[i+1].startswith(SPIECE_UNDERLINE):
+        if segmented_tokens[i+1].startswith(sep):
             #print(i)
             mask[i] = True
         # always take the last token representation for the last word
@@ -78,22 +88,35 @@ def make_hdf5_file(sentence_to_index, vectors, output_file_path):
         sentence_index_dataset[0] = json.dumps(sentence_to_index)
 
 
-def run(hdf5_filename, model, tokenizer, output_file_path):
+def run(input_hdf5_filename, model, tokenizer, sep, output_hdf5_filename):
 
     print('reading sentences from hdf5')
-    hdf5 = h5py.File(hdf5_filename)
+    hdf5 = h5py.File(input_hdf5_filename)
     sentence_to_idx = json.loads(hdf5['sentence_to_index'][0])
     hdf5.close()
     idx_to_repr = dict()
 
     print('getting repreesntations from model')
     for s, idx in tqdm(sentence_to_idx.items(), desc='repr'):
-        hidden_states = get_sentence_repr(s, model, tokenizer)
+        hidden_states = get_sentence_repr(s, model, tokenizer, sep)
         idx_to_repr[idx] = hidden_states
 
     print('writing representations to new hdf5')
-    make_hdf5_file(sentence_to_idx, idx_to_repr, output_file_path)
+    make_hdf5_file(sentence_to_idx, idx_to_repr, output_hdf5_filename)
 
 
 if __name__ == '__main__':
-    run(hdf5_filename, model, tokenizer, output_file_path)
+    if len(sys.argv) == 4:
+        model, tokenizer, sep = get_model_and_tokenizer(sys.argv[1])
+        input_hdf5_filename = sys.argv[2]
+        output_hdf5_filename = sys.argv[3]
+    else:
+        print('USAGE: python ' + sys.argv[0] + ' <model name> <input hdf5 file> <output hdf5 file>')
+
+    run(input_hdf5_filename, model, tokenizer, sep, output_hdf5_filename)
+
+
+
+#input_hdf5_filename = '/data/sls/temp/belinkov/contextual-corr-analysis/contextualizers/elmo_original/ptb_pos_dev.hdf5'
+#output_filename = '/data/sls/temp/belinkov/contextual-corr-analysis/contextualizers/xlnet_large_cased/ptb_pos_dev.hdf5'
+
