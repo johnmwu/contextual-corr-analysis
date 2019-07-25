@@ -23,6 +23,12 @@ srun --mem=15GB --cpus-per-task=4 --gres=gpu:1 --partition=2080 --output=/data/s
 
 srun --mem=15GB --cpus-per-task=32 --partition=630 --output=/data/sls/temp/johnmwu/contextual-corr-analysis/mk_results9-1-1.out mk_results9-1.sh & 
 
-srun --mem=90GB --cpus-per-task=32 --partition=630 --output=/data/sls/temp/johnmwu/contextual-corr-analysis/mk_results8-rbfcka1.out mk_results8-rbfcka.sh &
+srun --mem=90GB --cpus-per-task=32 --partition=630 --output=/data/sls/temp/johnmwu/contextual-corr-analysis/mk_results8-rbfcka1.out mk_results8-rbfcka.sh & DONE
 
-srun --mem=240GB --cpus-per-task=32 --partition=630 --output=/data/sls/temp/johnmwu/contextual-corr-analysis/mk_results10-1-1.out mk_results10-1.sh &
+srun --mem=240GB --cpus-per-task=32 --partition=630 --output=/data/sls/temp/johnmwu/contextual-corr-analysis/mk_results10-1-1.out mk_results10-1.sh & without yaml
+
+srun --mem=240GB --cpus-per-task=32 --partition=630 --output=/data/sls/temp/johnmwu/contextual-corr-analysis/mk_results10-1-2.out mk_results10-1.sh & failed, apparently the yaml was wrong
+
+srun --mem=240GB --cpus-per-task=32 --partition=630 --output=/data/sls/temp/johnmwu/contextual-corr-analysis/mk_results10-1-3.out mk_results10-1.sh &
+
+srun --mem=240GB --cpus-per-task=32 --ntasks=1 --partition=630 --output=/data/sls/temp/johnmwu/contextual-corr-analysis/mk_results10-1-4.out mk_results10-1.sh &

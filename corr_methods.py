@@ -667,8 +667,9 @@ class RBFCKA(Method):
         # dask setup
         if daskp:
             from dask.distributed import Client, progress
-            client = Client(processes=False, threads_per_worker=32, n_workers=1,
-                            memory_limit='200GB')
+            client = Client(processes=False, threads_per_worker=32,
+                            n_workers=1, memory_limit='160GB',
+                            local_dir="/data/sls/temp/johnmwu/dask-worker-space")
 
         # Set `self.similarities`
         # {network: {other: rbfcka_similarity}}

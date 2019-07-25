@@ -91,6 +91,12 @@
     usage seems to fluctuate from 1000 - 1800% cpu usage. This is on the
     cpu without using dask.
   - Thus, not sure if the allocation of 32 cores is entirely necessary.
+  - job 10 (with dask) uses up to 5500% of cpu. Not sure how this is possible
+- Mem usage
+  
+  Got this error:
+  /usr/users/johnmwu/anaconda3/envs/jmw0/lib/python3.7/contextlib.py:119: UserWarning: Creating scratch directories is taking a surprisingly long time. This is often due to running workers on a network file system. Consider specifying a local-directory to point workers to write scratch data to a local disk.
+
 - Currently, my rule of thumb is that everything saved should be on the CPU. 
 - RBF CKA on entire dataset runs out of memory..
   
@@ -146,6 +152,8 @@
   - Test whether these neurons are actually important.  This may be
     difficult, as these are upstream models. However, I think that
     this could be doable, but we need to choose the e2e model well. 
+    
+    We could compare these for different downstream tasks. 
   - Determine whether there are particular neurons that capture
     specific linguistic information. An interesting thing to look
     at would be activations on the same word, in different
@@ -160,11 +168,28 @@
   Written Mon Jul  8 12:50:31 EDT 2019
   - Values of attention heads
   - Values of the cell of the lstm.
+    
+    For some of these models, this could be harder than others. For
+    example, ELMo. In ELMo, Yonatan says that the LSTM is all very low
+    level, so extracting information out of the gates is not very easy. 
   - Also gates. Gates could be doing similar things to attention heads.
   - Maybe different contextualizers. For example, elmo trained w/ diff
     objectives. Maybe elmo on A is more correlated to bert on A than
     elmo on A with elmo on B. Also maybe xlnet or gpt2 (different
     models). We don't have activations. Use huggingface interface maybe.
+  written Tue Jul 23 15:56:22 EDT 2019
+  - is information centralized or distributed?
+  - Based on this, you could perform some intervention experiments
+  - Question of distributivity vs localization
+    
+    There's multiple ways to tackle this:
+    - We can say a model is distributed for a property
+    - We may also be able to try and say a network is "distributed" or
+      "localized". This is harder, according to Yonatan, but can be done
+      in an analogous way to looking at the singular values of a matrix
+      or the gini coefficient of something. 
+  - Finding the strengths of various models, and attempting to create a
+    better model
 - Papers read
   - Identifying and Controlling Important Neurons.. 
   - Neural Machine Translation by Jointly Learning... (attn)
@@ -172,6 +197,9 @@
   - Deep Contextualized word representations (elmo)
   - Sequence to sequence learning with neural networks 
   - SVCCA: Singular Vector Canonical .. 
+  - Neural Machine Translation of Rare Words with Subword Units
+  - Attention is all you need
+  - Transformer-XL
 * Progress update
 ** Fri Jun 14 14:53:49 EDT 2019
 In emacs org-mode, there should be a way to set it up so that when tasks are
