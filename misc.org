@@ -190,6 +190,46 @@
       or the gini coefficient of something. 
   - Finding the strengths of various models, and attempting to create a
     better model
+    
+    This is hard if we're restricted to unsupervised methods. 
+  written Thu Jul 25 12:35:57 EDT 2019
+  - in terms of improving models, deeper layers' attention heads maybe
+    don't need to completely relearn alignments. If pos 5 of layer 2 is
+    super aligned to pos 10 of layer 1, then the network maybe shouldn't
+    have to completely figure this out again. Maybe the alignment model
+    can have residual connections.
+    
+    Would be interesting if we could get any evidence that this is the
+    case.
+    
+    Then again, different attention heads are learning different things,
+    and forcing one attention head to be similar to the next may not be
+    the best.
+  - how correlated is the alignment model of one layer with the next?
+  written Mon Jul 29 13:59:05 EDT 2019
+  - better understanding the differences between LSTMs and Transformers
+  - LSTM's cannot be "it" as far as NLP is concerned. 
+    
+    There are too many long range dependecies. For example, as I'm
+    reading this paper, I'm operating kind of like an LSTM. But once I
+    get to this phrase "the dataset" I think "wait, where is this
+    dataset coming from again?", and then backtrack to look for
+    it. Thus, when I read something, it's a combination of an LSTM and
+    something else that is able to find long range connections. LSTMs
+    are advertised as having long memory, but it's not long enough. As
+    another example, why do you think humans need to revise before
+    exams? The issue is that things are not just perfectly integrated
+    into your knowledge as you become aware of them.
+      
+    Physically speaking, there's some sense in which humans *must*
+    operate as a state machine (LSTM-like). In a deterministic view,
+    the only things that can change you are external stimuli. But
+    intuitively, all humans need to review from time to time, to
+    reorganize.
+    
+    There may be papers that talk about this already. Would be great to
+    find evidence of this.
+
 - Papers read
   - Identifying and Controlling Important Neurons.. 
   - Neural Machine Translation by Jointly Learning... (attn)
@@ -200,6 +240,14 @@
   - Neural Machine Translation of Rare Words with Subword Units
   - Attention is all you need
   - Transformer-XL
+  - XLnet
+  - Linguistic Knowledge and Transferability of Contextual
+    Representations
+  - Building a Large Annotated Corpus of English: The Penn Treebank
+  - CoNLL-2000 shared task
+  - CoNLL-2003 shared task
+  - SNLI
+  - GloVe
 * Progress update
 ** Fri Jun 14 14:53:49 EDT 2019
 In emacs org-mode, there should be a way to set it up so that when tasks are
