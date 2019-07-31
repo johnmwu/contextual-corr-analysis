@@ -95,10 +95,10 @@
 - Mem usage
   
   Got this error:
-  /usr/users/johnmwu/anaconda3/envs/jmw0/lib/python3.7/contextlib.py:119: UserWarning: Creating scratch directories is taking a surprisingly long time. This is often due to running workers on a network file system. Consider specifying a local-directory to point workers to write scratch data to a local disk.
+  /usr/users/johnmwu/anaconda3/envs/jmw0/lib/python3.7/contextlib.py:119: UserWarning: Creating scratch directories is taking a surprisingly long time. This is often due to running workers on a network file system. Consider specifying a local-directory to point workers to write scratch data to a local disk.  *YB:* you can specify the local /tmp or /scratch directories for that 
 
 - Currently, my rule of thumb is that everything saved should be on the CPU. 
-- RBF CKA on entire dataset runs out of memory..
+- RBF CKA on entire dataset runs out of memory..  *YB:* As we discussed, would be good to get this working with Dask, but if not, at least run a few different dataset sizes and confirm that there's little variation among them
   
   Ran on Thu Jul 18 18:44:49 EDT 2019
   Computing correlations
