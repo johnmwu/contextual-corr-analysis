@@ -1,5 +1,5 @@
 import torch
-from pytorch_transformers import XLNetTokenizer, XLNetModel, GPT2Tokenizer, GPT2Model
+from pytorch_transformers import XLNetTokenizer, XLNetModel, GPT2Tokenizer, GPT2Model, XLMTokenizer, XLMModel
 
 import h5py
 import json
@@ -24,6 +24,10 @@ def get_model_and_tokenizer(model_name):
         model = GPT2Model.from_pretrained(model_name, output_hidden_states=True).to(device)
         tokenizer = GPT2Tokenizer.from_pretrained(model_name)
         sep = 'Ġ'
+    elif model_name.startswith('xlm'):
+        model = XLMModel.from_pretrained(model_name, output_hidden_states=True).to(device)
+        tokenizer = XLMTokenizer.from_pretrained(model_name)
+        sep = '</w>'
     else:
         print('Unrecognized model name:', model_name)
         sys.exit()
@@ -31,7 +35,7 @@ def get_model_and_tokenizer(model_name):
     return model, tokenizer, sep
 
 # this follows the HuggingFace API for pytorch-transformers
-def get_sentence_repr(sentence, model, tokenizer, sep):
+def get_sentence_repr(sentence, model, tokenizer, sep, model_name):
     """
     Get representations for one sentence
     """
@@ -49,14 +53,27 @@ def get_sentence_repr(sentence, model, tokenizer, sep):
     segmented_tokens = tokenizer.convert_ids_to_tokens(ids)
     assert len(segmented_tokens) == all_hidden_states.shape[1], 'incompatible tokens and states'
     mask = np.full(len(segmented_tokens), False)
-    # if next token is a new word, take current token's representation
-    #print(segmented_tokens)
-    for i in range(len(segmented_tokens)-1):
-        if segmented_tokens[i+1].startswith(sep):
-            #print(i)
-            mask[i] = True
+
+    if model_name.startswith('gpt2') or model_name.startswith('xlnet'):
+        # if next token is a new word, take current token's representation
+        #print(segmented_tokens)
+        for i in range(len(segmented_tokens)-1):
+            if segmented_tokens[i+1].startswith(sep):
+                #print(i)
+                mask[i] = True
         # always take the last token representation for the last word
-    mask[-1] = True
+        mask[-1] = True
+    # example: ['jim</w>', 'henson</w>', 'was</w>', 'a</w>', 'pup', 'pe', 'teer</w>']
+    elif model_name.startswith('xlm'):
+        # if current token is a new word, take it
+        for i in range(len(segmented_tokens)):
+            if segmented_tokens[i].endswith(sep):
+                mask[i] = True
+        mask[-1] = True
+    else:
+        print('Unrecognized model name:', model_name)
+        sys.exit()
+
     all_hidden_states = all_hidden_states[:, mask]
 
     return all_hidden_states
@@ -88,7 +105,7 @@ def make_hdf5_file(sentence_to_index, vectors, output_file_path):
         sentence_index_dataset[0] = json.dumps(sentence_to_index)
 
 
-def run(input_hdf5_filename, model, tokenizer, sep, output_hdf5_filename):
+def run(input_hdf5_filename, model, tokenizer, sep, output_hdf5_filename, model_name):
 
     print('reading sentences from hdf5')
     hdf5 = h5py.File(input_hdf5_filename)
@@ -98,7 +115,7 @@ def run(input_hdf5_filename, model, tokenizer, sep, output_hdf5_filename):
 
     print('getting repreesntations from model')
     for s, idx in tqdm(sentence_to_idx.items(), desc='repr'):
-        hidden_states = get_sentence_repr(s, model, tokenizer, sep)
+        hidden_states = get_sentence_repr(s, model, tokenizer, sep, model_name)
         idx_to_repr[idx] = hidden_states
 
     print('writing representations to new hdf5')
@@ -107,13 +124,14 @@ def run(input_hdf5_filename, model, tokenizer, sep, output_hdf5_filename):
 
 if __name__ == '__main__':
     if len(sys.argv) == 4:
-        model, tokenizer, sep = get_model_and_tokenizer(sys.argv[1])
+        model_name = sys.argv[1]
+        model, tokenizer, sep = get_model_and_tokenizer(model_name)
         input_hdf5_filename = sys.argv[2]
         output_hdf5_filename = sys.argv[3]
     else:
         print('USAGE: python ' + sys.argv[0] + ' <model name> <input hdf5 file> <output hdf5 file>')
 
-    run(input_hdf5_filename, model, tokenizer, sep, output_hdf5_filename)
+    run(input_hdf5_filename, model, tokenizer, sep, output_hdf5_filename, model_name)
 
 
 
