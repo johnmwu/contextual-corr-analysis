@@ -381,15 +381,13 @@ class CCA(Method):
                 stdevs = t.std(0, keepdim=True)
 
                 self.nrepresentations_d[network] = (t - means) / stdevs
-        else:
-            self.nrepresentations_d = self.representations_d
 
         # Set `whitening_transforms`, `pca_directions`
         # {network: whitening_tensor}
         whitening_transforms = {} 
         pca_directions = {} 
         for network in tqdm(self.nrepresentations_d, desc='pca'):
-            X = self.nrepresentations_d[network].to(self.device)
+            X = self.nrepresentations_d[network]
             U, S, V = torch.svd(X)
 
             var_sums = torch.cumsum(S.pow(2), 0)
@@ -398,16 +396,20 @@ class CCA(Method):
             print('For network', network, 'wanted size is', wanted_size)
 
             whitening_transform = torch.mm(V, torch.diag(1/S))
-            whitening_transforms[network] = whitening_transform[:, :wanted_size].cpu()
-            pca_directions[network] = U[:, :wanted_size].cpu()
+            whitening_transforms[network] = whitening_transform[:, :wanted_size]
+            pca_directions[network] = U[:, :wanted_size]
 
         # Set 
         # `self.transforms`: {network: {other: svcca_transform}}
         # `self.corrs`: {network: {other: canonical_corrs}}
+        # `self.pw_alignments`: {network: {other: unnormalized pw weights}}
+        # `self.pw_corrs`: {network: {other: pw_alignments*corrs}}
         # `self.sv_similarities`: {network: {other: svcca_similarities}}
         # `self.pw_similarities`: {network: {other: pwcca_similarities}}
         self.transforms = {network: {} for network in self.nrepresentations_d}
         self.corrs = {network: {} for network in self.nrepresentations_d}
+        self.pw_alignments = {network: {} for network in self.nrepresentations_d}
+        self.pw_corrs = {network: {} for network in self.nrepresentations_d}
         self.sv_similarities = {network: {} for network in self.nrepresentations_d}
         self.pw_similarities = {network: {} for network in self.nrepresentations_d}
         for network, other_network in tqdm(p(self.nrepresentations_d,
@@ -421,11 +423,8 @@ class CCA(Method):
             if other_network in self.transforms[network]: 
                 continue
 
-            X = pca_directions[network].to(self.device)
-            Y = pca_directions[other_network].to(self.device)
-
-            trans_X = whitening_transforms[network].to(self.device)
-            trans_Y = whitening_transforms[other_network].to(self.device)
+            X = pca_directions[network]
+            Y = pca_directions[other_network]
 
             # Perform SVD for CCA.
             # u s vt = Xt Y
@@ -433,46 +432,52 @@ class CCA(Method):
             u, s, v = torch.svd(torch.mm(X.t(), Y))
 
             # `self.transforms`, `self.corrs`, `self.sv_similarities`
-            self.transforms[network][other_network] = torch.mm(trans_X, u).cpu()
-            self.transforms[other_network][network] = torch.mm(trans_Y, v).cpu()
+            self.transforms[network][other_network] = torch.mm(whitening_transforms[network], u)
+            self.transforms[other_network][network] = torch.mm(whitening_transforms[other_network], v)
 
-            self.corrs[network][other_network] = s.cpu()
-            self.corrs[other_network][network] = s.cpu()
+            self.corrs[network][other_network] = s
+            self.corrs[other_network][network] = s
 
             self.sv_similarities[network][other_network] = s.mean().item()
             self.sv_similarities[other_network][network] = s.mean().item()
 
-            # Compute `self.pw_similarities`. See https://arxiv.org/abs/1806.05759. 
-            # This is not symmetric. 
+            # Compute `self.pw_alignments`, `self.pw_corrs`, `self.pw_similarities`. 
+            # This is not symmetric
 
             # For X
             H = torch.mm(X, u)
-            Z = self.representations_d[network].to(self.device)
+            Z = self.representations_d[network]
             align = torch.abs(torch.mm(H.t(), Z))
             a = torch.sum(align, dim=1, keepdim=False)
-            a = a / torch.sum(a)
-            self.pw_similarities[network][other_network] = torch.sum(s*a).cpu().item()
+            self.pw_alignments[network][other_network] = a
+            self.pw_corrs[network][other_network] = s*a
+            self.pw_similarities[network][other_network] = (torch.sum(s*a)/torch.sum(a)).item()
 
             # For Y
             H = torch.mm(Y, v)
-            Z = self.representations_d[other_network].to(self.device)
+            Z = self.representations_d[other_network]
             align = torch.abs(torch.mm(H.t(), Z))
             a = torch.sum(align, dim=1, keepdim=False)
-            a = a / torch.sum(a)
-            self.pw_similarities[other_network][network] = torch.sum(s*a).cpu().item()
+            self.pw_alignments[other_network][network] = a
+            self.pw_corrs[other_network][network] = s*a
+            self.pw_similarities[other_network][network] = (torch.sum(s*a)/torch.sum(a)).item()
 
     def write_correlations(self, output_file):
         if self.save_cca_transforms:
             output = {
                 "transforms": self.transforms,
-                "corrs": self.corrs,
+                "corrs": self.corrs.cpu().numpy(),
                 "sv_similarities": self.sv_similarities,
+                "pw_alignments": self.pw_alignments,
+                "pw_corrs": self.pw_corrs.cpu().numpy(),
                 "pw_similarities": self.pw_similarities,
             }
         else:
             output = {
-                "corrs": self.corrs,
+                "corrs": self.corrs.cpu().numpy(),
                 "sv_similarities": self.sv_similarities,
+                "pw_alignments": self.pw_alignments,
+                "pw_corrs": self.pw_corrs.cpu().numpy(),
                 "pw_similarities": self.pw_similarities,
             }
         torch.save(output, output_file)

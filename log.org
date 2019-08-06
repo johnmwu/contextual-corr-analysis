@@ -1,0 +1,393 @@
+
+Archived entries from file /afs/csail.mit.edu/u/j/johnmwu/core/mind/sys/short/proc/main.org
+
+
+* DONE Universality and individuality in neural dynamics
+  :PROPERTIES:
+  :ARCHIVE_TIME: 2019-08-05 Mon 11:16
+  :ARCHIVE_FILE: ~/core/mind/sys/short/proc/main.org
+  :ARCHIVE_OLPATH: yonatan/contextual-corr-analysis
+  :ARCHIVE_CATEGORY: main
+  :ARCHIVE_TODO: DONE
+  :END:
+  on sec 3.3
+** DONE Define double centering
+** DONE Define MDS
+** DONE Summarize
+*** CCA based similarity can be misleading, and can depend on the
+      activation function.
+*** CCA based similarity will cluster based on architecture and
+      activation, but the "fixed point topology" and linearized
+      dynamics remains similar.
+** DONE email them about typo on pg 8
+** DONE Are these three tasks standard?
+*** K bit flip flop uhh doesn't seem to be
+*** sine wave lol... this also comes from some paper written
+      earlier by one of the authors
+*** CDI doesn't seem to be
+** DONE How exactly do they construct this "fixed point topology
+    MDS"?
+    
+    I see. It seems:
+*** Construct a markov chain consisting of the fixed points for
+      each model
+*** Construct a connectivity matrix for the fixed point graph
+*** Put all these matrices in the same space, by imposing some
+      order on the set of fixed points
+      
+      Throw out all models which have a non-modal number of fixed
+      points.
+*** Use euclidean distance (I guess the frobenius norm) to
+      quantify dissimilarity.
+** DONE How is this constructed for sine wave generation?
+    
+    Hmm... they don't seem to mention this.
+** DONE Add comments to the paper pdf file
+** DONE Add into anki
+comment
+** I feel like their topology analysis is interesting, but sort of
+    just confirms the obvious. Yes, all the models are trained on
+    the same task, so of course they're learning the same things.
+** It would be helpful if they released code. The following things
+    are not made clear:
+*** How they do fixed point topology MDS (slightly more clear on
+      the flip flop task, but even there not exactly)
+*** What they mean by eigvals (fig 3e) is the eigvals of some
+      section of the jacobian matrix at a fixed point, right?
+
+* DONE I need to learn the standard terminology for all of the nlp
+  :PROPERTIES:
+  :ARCHIVE_TIME: 2019-08-05 Mon 11:17
+  :ARCHIVE_FILE: ~/core/mind/sys/short/proc/main.org
+  :ARCHIVE_OLPATH: yonatan/contextual-corr-analysis
+  :ARCHIVE_CATEGORY: main
+  :ARCHIVE_TODO: DONE
+  :END:
+ tasks
+ 
+ task
+** DONE part of speech tagging
+*** DONE Read the initial ptb paper
+     
+     comment
+**** Wait. So do they present the tagset?
+**** Interesting.. it seems that papers presenting a dataset go
+       into a lot of detail about how the data was collected. It
+       makes sense.
+**** They talk about the "training of annotators". Isn't this kind
+       of like training an organic neural network on a small amt of
+       data, to then generate more data for another neural network to
+       train on?
+**** They talk about annotators having 3 or 4 months of
+       experience.. wtf? How long were annotators working on this
+       damn thing?
+**** This paper renders trees as sexps. Respect.
+task
+**** DONE Add into anki
+**** DONE
+*** DONE
+** DONE Chunking
+*** DONE Read the conll-2000 shared task paper
+*** DONE Enter "Chunking" into anki
+** DONE named entity recognition
+*** DONE Read the conll-2003 paper
+** DONE natural language inference
+*** DONE Read the SNLI paper
+**** DONE OK... what is GloVe?
+       
+       Oh shit. It'd be cool to have a look at these embeddings.
+       
+       task
+***** DONE Try looking at some GloVe vectors?
+****** DONE Get jupyter notebook working from within emacs. Ahh
+           fuck. It needs 25.3, which ubuntu doesn't have.
+****** DONE Move the misc notebook into my filesystem
+***** DONE Add into anki
+**** DONE
+*** DONE
+** DONE coreference resolution
+   
+   task
+*** DONE Read conll 2012
+     
+     Interesting
+**** chinese word segmentation is fairly accurate (pg 9)
+task
+**** DONE Wait so what are these shared tasks? Ok... so it seems
+       that each year there is a shared task.
+*** DONE Define "coreference resolution"
+** DONE
+
+* DONE Read Yonatan's paper with Nelson
+  :PROPERTIES:
+  :ARCHIVE_TIME: 2019-08-05 Mon 11:17
+  :ARCHIVE_FILE: ~/core/mind/sys/short/proc/main.org
+  :ARCHIVE_OLPATH: yonatan/contextual-corr-analysis
+  :ARCHIVE_CATEGORY: main
+  :ARCHIVE_TODO: DONE
+  :END:
+ 
+ What do they mean by "transferable"?
+ 
+ What do they mean by "task trained" LSTM in section 4.2?
+ 
+ comment
+** the list of tasks should probably be put in an appendix.
+** It's hard to exactly say the main points of this paper..
+main points
+** language modeling is the most transferable task
+   
+   evid
+*** sec 6.2 and table 3
+** lower layers of LSTMs are more transferable, but this is not true
+   of transformers
+   
+   evid
+*** figure 3 and 4
+** learning task specific features can help 
+   
+   evid
+*** table 2
+brings up a number of interesting things
+** how to fine-tune
+** importance of the initial training task
+** differences between transformers and LSTMs
+** which layers of which models are most generalizable?
+
+* DONE Recreate results8 to include RBF CKA.
+  :PROPERTIES:
+  :ARCHIVE_TIME: 2019-08-05 Mon 11:17
+  :ARCHIVE_FILE: ~/core/mind/sys/short/proc/main.org
+  :ARCHIVE_OLPATH: yonatan/contextual-corr-analysis
+  :ARCHIVE_CATEGORY: main
+  :ARCHIVE_TODO: DONE
+  :END:
+** DONE Run RBF CKA.
+*** DONE Make script
+*** DONE Run script
+** DONE Receive results (or possible failure)
+   
+   OK, the gpu failed. What the fuck. This error message
+           cat mk_results8-rbfcka1.out 
+     7it [09:02, 77.36s/it]
+     Loading representations
+
+     Initializing methods ['rbfcka']
+
+     Computing correlations
+     For method:  rbfcka
+     rbfcka:   0%|          | 0/8100 [00:00<?, ?it/s]Traceback (most recent call last):
+       File "../main.py", line 120, in <module>
+         disable_cuda=args.disable_cuda) 
+       File "../main.py", line 100, in main
+         method.compute_correlations()
+       File "/data/sls/u/urop/johnmwu/contextual-corr-analysis/corr_methods.py", line 571, in compute_correlations
+         Gx = center_gram(gram_rbf(X))
+       File "/data/sls/u/urop/johnmwu/contextual-corr-analysis/corr_methods.py", line 538, in gram_rbf
+         dot_products = torch.mm(X, X.t())
+     RuntimeError: cublas runtime error : the GPU program failed to execute at /opt/conda/conda-bld/pytorch_1556653215914/work/aten/src/THC/THCBlas.cu:259
+** DONE Try again with cpu machines. 
+   
+   Running on 630 machines rn.
+** DONE Somehow, the results are incorrect. That's a bit
+   worrying. Need to make them correct again.
+   
+   One interesting thing is that all columns are the same value.
+   
+   Another interesting thing is that mk_results9 is correct. Is it an
+   error in the code? That'll be answered by another run of
+   mk_results9.
+*** DONE Rerun mk_results9, see if I get the same thing
+     
+     The rerun on the gpu failed. That's worrying, but not the
+     problem we're trying to solve. Trying again on the trusted 630
+     machines..
+     
+     Ok, there seem to be no errors at least..
+*** DONE Make another analysis nb, see if the results are
+     correct. No.
+*** DONE What's wrong in the code? Ahh, I see. Let's try 9 again.
+*** DONE Regen the second analysis-9 nb.
+** DONE Rerun for results8
+** DONE Receive results
+** DONE Add results of rbfcka to analysis-8
+
+* DONE Create feature to use the full (stacked) representation of the
+  :PROPERTIES:
+  :ARCHIVE_TIME: 2019-08-05 Mon 11:17
+  :ARCHIVE_FILE: ~/core/mind/sys/short/proc/main.org
+  :ARCHIVE_OLPATH: yonatan/contextual-corr-analysis
+  :ARCHIVE_CATEGORY: main
+  :ARCHIVE_TODO: DONE
+  :END:
+ model.
+** DONE Make the ability to parse the string "full" from the optfile
+*** DONE Change hnb
+*** DONE Test
+*** DONE Copy over
+** DONE Make load_representations able to load it
+*** DONE Edit hnb
+*** DONE Copy over
+** DONE Commit
+
+* DONE Make heatmaps aligned.
+  :PROPERTIES:
+  :ARCHIVE_TIME: 2019-08-05 Mon 11:17
+  :ARCHIVE_FILE: ~/core/mind/sys/short/proc/main.org
+  :ARCHIVE_OLPATH: yonatan/contextual-corr-analysis
+  :ARCHIVE_CATEGORY: main
+  :ARCHIVE_TODO: DONE
+  :END:
+
+* DONE Create results8 nb. Probs just a copy of results7.
+  :PROPERTIES:
+  :ARCHIVE_TIME: 2019-08-05 Mon 11:17
+  :ARCHIVE_FILE: ~/core/mind/sys/short/proc/main.org
+  :ARCHIVE_OLPATH: yonatan/contextual-corr-analysis
+  :ARCHIVE_CATEGORY: main
+  :ARCHIVE_TODO: DONE
+  :END:
+
+* DONE Reorganize root dir of project
+  :PROPERTIES:
+  :ARCHIVE_TIME: 2019-08-05 Mon 11:17
+  :ARCHIVE_FILE: ~/core/mind/sys/short/proc/main.org
+  :ARCHIVE_OLPATH: yonatan/contextual-corr-analysis
+  :ARCHIVE_CATEGORY: main
+  :ARCHIVE_TODO: DONE
+  :END:
+
+* DONE Heatmap for similarity measures would be cool
+  :PROPERTIES:
+  :ARCHIVE_TIME: 2019-08-05 Mon 11:17
+  :ARCHIVE_FILE: ~/core/mind/sys/short/proc/main.org
+  :ARCHIVE_OLPATH: yonatan/contextual-corr-analysis
+  :ARCHIVE_CATEGORY: main
+  :ARCHIVE_TODO: DONE
+  :END:
+** DONE Try seaborn
+** DONE
+
+* DONE Determine mem usage of rbf cka? (w)
+  :PROPERTIES:
+  :ARCHIVE_TIME: 2019-08-05 Mon 11:17
+  :ARCHIVE_FILE: ~/core/mind/sys/short/proc/main.org
+  :ARCHIVE_OLPATH: yonatan/contextual-corr-analysis
+  :ARCHIVE_CATEGORY: main
+  :ARCHIVE_TODO: DONE
+  :END:
+ 
+ Emailed Yonatan. See what he says.
+
+* DONE Read calypso, and openai transformer
+  CLOSED: [2019-08-05 Mon 14:04]
+  :PROPERTIES:
+  :ARCHIVE_TIME: 2019-08-05 Mon 14:04
+  :ARCHIVE_FILE: ~/core/mind/sys/short/proc/main.org
+  :ARCHIVE_OLPATH: yonatan/contextual-corr-analysis
+  :ARCHIVE_CATEGORY: main
+  :ARCHIVE_TODO: DONE
+  :END:
+  - [X] openai transformer
+    - [X] Wait. Does elmo do fine tuning?
+      
+      They say no. It doesn't. But, how to include elmo seems to
+      differ among end tasks.
+    - [X] Define generative model
+    - [X] Is there a GLUE leaderboard history?
+      
+      Appears not.. also GPT-1 is not on the GLUE leaderboard. It's
+      kind of strange, the GLUE leaderboard doesn't have that many
+      entries.
+    
+    main points
+    - unsupervised learning is extremely important
+    - input transformations for specific tasks
+    - fine tuned using a lc of downstream obj and lm objective
+    - hypothesize that the underlying generative model learns to
+      perform mand of the tasks evaluated on
+    - they have a table where they display the importance of pretraining
+  - [X] gpt-2
+    
+    main points
+    - Use new dataset called WebText
+    - LM can perform downstream tasks in a zero-shot
+      setting. Actually, that's the main thing in this paper: zero
+      shot learning.
+    - Hmm.. thesis seems to be: if you can do language modelling, you
+      can do anything.
+    - Supports the thesis that bigger is better
+    - Large language models are very slow in learning
+    - Scrape all outbound links with at least 3 karma on Reddit, total
+      40GB of text
+      
+    comment
+    - This paper could also be called "Language modelling is all you
+      need"
+      
+    question
+    
+    task
+    - [X] Enter into anki
+    - [X] 
+  - [X] calypso
+    
+    Hmm.. seems like there isn't a paper. 
+
+* DONE Decide on what to do for PWCCA
+     CLOSED: [2019-08-05 Mon 17:11]
+     CLOCK: [2019-08-05 Mon 14:22]--[2019-08-05 Mon 14:22] =>  0:00
+  :PROPERTIES:
+  :ARCHIVE_TIME: 2019-08-05 Mon 19:03
+  :ARCHIVE_FILE: ~/core/mind/sys/short/proc/main.org
+  :ARCHIVE_OLPATH: yonatan/contextual-corr-analysis/Top k correlations in SVCCA?
+  :ARCHIVE_CATEGORY: main
+  :ARCHIVE_TODO: DONE
+  :END:
+One observation is that taking the sum or the mean makes no difference.
+
+Ahh, ok. I think I can save
+- alignments (raw)
+- alignments * corrs
+** DONE Edit ju notebook to do these extra computations
+   CLOSED: [2019-08-05 Mon 16:46]
+   CLOCK: [2019-08-05 Mon 14:22]--[2019-08-05 Mon 16:46] =>  2:24
+** DONE Copy paste the notebook in
+   CLOSED: [2019-08-05 Mon 17:09]
+   CLOCK: [2019-08-05 Mon 16:46]--[2019-08-05 Mon 17:09] =>  0:23
+** DONE Edit how writing works
+   CLOSED: [2019-08-05 Mon 17:11]
+   CLOCK: [2019-08-05 Mon 17:09]--[2019-08-05 Mon 17:11] =>  0:02
+
+* DONE Edit the jupyter notebook to add this info (just svcca for now)
+  CLOSED: [2019-08-05 Mon 19:03]
+  :PROPERTIES:
+  :ARCHIVE_TIME: 2019-08-05 Mon 19:03
+  :ARCHIVE_FILE: ~/core/mind/sys/short/proc/main.org
+  :ARCHIVE_OLPATH: yonatan/contextual-corr-analysis/Top k correlations in SVCCA?
+  :ARCHIVE_CATEGORY: main
+  :ARCHIVE_TODO: DONE
+  :END:
+** DONE Can I get a scrolling, interactive heatmap?
+      CLOSED: [2019-08-05 Mon 19:03]
+      CLOCK: [2019-08-05 Mon 17:51]--[2019-08-05 Mon 19:03] =>  1:12
+OK, so it is possible. I should look into a few things:
+- [X] ipywidgets
+  - [X] What is a "widget"?
+  - [X] Try getting a heatmap to display
+
+* TODO Change the casing on if network == other_network
+     CLOCK: [2019-08-06 Tue 12:03]
+  :PROPERTIES:
+  :ARCHIVE_TIME: 2019-08-06 Tue 12:43
+  :ARCHIVE_FILE: ~/core/mind/sys/short/proc/main.org
+  :ARCHIVE_OLPATH: yonatan/contextual-corr-analysis/Top k correlations in SVCCA?
+  :ARCHIVE_CATEGORY: main
+  :ARCHIVE_TODO: TODO
+  :END:
+NVM, just leave it as a continue. I think the issue is because the
+singular values are not different from one another.
+** DONE Create a place for computer errors in my fs
+      CLOSED: [2019-08-06 Tue 12:43]
+
+- [X] How to automatically refile to this location?

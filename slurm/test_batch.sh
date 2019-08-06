@@ -1,5 +1,5 @@
 #!/bin/bash
-#SBATCH --partition=630
+#SBATCH --partition=sm
 #SBATCH --ntasks=1
 #SBATCH --nodes=1-1
 #SBATCH --job-name=test_batch
