@@ -6,6 +6,7 @@ import numpy as np
 import h5py
 from os.path import basename, dirname
 import dask.array as da
+import pickle
 
 def load_representations(representation_fname_l, limit=None,
                          layerspec_l=None, first_half_only_l=False,
@@ -140,13 +141,6 @@ class MaxMinCorr(Method):
         self.op = op
 
     def compute_correlations(self):
-        """
-        Set `self.correlations`, `self.clusters`, `self.neuron_sort`. 
-        """
-
-        if self.op is None:
-            raise ValueError('self.op not set in MaxMinCorr')
-
         # Set `means_d`, `stdevs_d`
         means_d = {}
         stdevs_d = {}
@@ -156,12 +150,17 @@ class MaxMinCorr(Method):
             means_d[network] = t.mean(0, keepdim=True)
             stdevs_d[network] = (t - means_d[network]).pow(2).mean(0, keepdim=True).pow(0.5)
 
-        # Set `self.correlations`
-        # {network: {other: tensor}}
-        self.correlations = {network: {} for network in
+        # Set `self.corrs` : {network: {other: [corr]}}
+        # Set `self.pairs` : {network: {other: [pair]}}
+        # pair is index of neuron in other network
+        # Set `self.similarities` : {network: {other: sim}}
+        self.corrs = {network: {} for network in
                              self.representations_d}
+        self.pairs = {network: {} for network in
+                             self.representations_d}
+        self.similarities = {network: {} for network in
+                         self.representations_d}
         num_words = next(iter(self.representations_d.values())).size()[0]
-
         for network, other_network in tqdm(p(self.representations_d,
                                              self.representations_d),
                                              desc='correlate',
@@ -169,7 +168,7 @@ class MaxMinCorr(Method):
             if network == other_network:
                 continue
 
-            if other_network in self.correlations[network]: 
+            if other_network in self.corrs[network]: 
                 continue
 
             device = self.device
@@ -184,55 +183,55 @@ class MaxMinCorr(Method):
             covariance = (torch.mm(t1.t(), t2) / num_words # E[ab]
                           - torch.mm(m1.t(), m2)) # E[a]E[b]
             correlation = covariance / torch.mm(s1.t(), s2)
-
             correlation = correlation.cpu().numpy()
-            self.correlations[network][other_network] = correlation
-            self.correlations[other_network][network] = correlation.T
+            correlation = np.abs(correlation)
 
-        # Set `self.clusters`
-        # {network: {neuron: {other: other_neuron}}}
-        self.clusters = {network: {} for network in self.representations_d} 
-        for network in tqdm(self.representations_d, desc='self.clusters',
-                            total=len(self.representations_d)):
-            for neuron in range(self.num_neurons_d[network]): 
-                self.clusters[network][neuron] = {
-                    other : max(range(self.num_neurons_d[other]),
-                                key=lambda i:
-                                abs(self.correlations[network][other][neuron][i]))
-                    for other in self.correlations[network]
-                }
+            self.corrs[network][other_network] = correlation.max(axis=1)
+            self.corrs[other_network][network] = correlation.max(axis=0)
 
-        # Set `self.neuron_sort`
-        # {network, sorted_list}
+            self.similarities[network][other_network] = self.corrs[network][other_network].mean()
+            self.similarities[other_network][network] = self.corrs[other_network][network].mean()
+
+            self.pairs[network][other_network] = correlation.argmax(axis=1)
+            self.pairs[other_network][network] = correlation.argmax(axis=0)
+
+        # Set `self.neuron_sort` : {network, sorted_list}
+        # Set `self.neuron_notated_sort` : {network: [(neuron, {other: (corr, pair)})]}
         self.neuron_sort = {} 
+        self.neuron_notated_sort = {}
         for network in tqdm(self.representations_d, desc='annotation'):
             self.neuron_sort[network] = sorted(
-                range(self.num_neurons_d[network]), key=lambda i :
-                self.op(
-                    abs(self.correlations[network][other][i][self.clusters[network][i][other]])
-                    for other in self.clusters[network][i]), reverse=True )
-
+                range(self.num_neurons_d[network]), 
+                key=lambda i: self.op(
+                    self.corrs[network][other][i] for other in self.corrs[network]
+                ), 
+                reverse=True,
+            )
+            self.neuron_notated_sort[network] = [
+                (
+                    neuron,
+                    {
+                        other : (
+                            self.corrs[network][other][neuron], 
+                            self.pairs[network][other][neuron],
+                        ) 
+                        for other in self.corrs[network]
+                    }
+                ) 
+                for neuron in self.neuron_sort[network]
+            ]
 
     def write_correlations(self, output_file):
-        """
-        Create `self.neuron_notated_sort`, and write it to output_file. 
-        """
+        output = {
+            "corrs" : self.corrs, 
+            "pairs" : self.pairs,
+            "similarities" : self.similarities,
+            "neuron_sort" : self.neuron_sort, 
+            "neuron_notated_sort" : self.neuron_notated_sort,
+        }
 
-        self.neuron_notated_sort = {}
-        for network in tqdm(self.representations_d, desc='write'):
-            self.neuron_notated_sort[network] = [
-                    (
-                        neuron, 
-                        {
-                            '%s:%d' % (other, self.clusters[network][neuron][other],):
-                            float(self.correlations[network][other][neuron][self.clusters[network][neuron][other]])
-                            for other in self.clusters[network][neuron]
-                        }
-                    )
-                    for neuron in self.neuron_sort[network]
-                ]
-
-        json.dump(self.neuron_notated_sort, open(output_file, "w"), indent=4)
+        with open(output_file, "wb") as f:
+            pickle.dump(output, f)
 
 
 class MaxCorr(MaxMinCorr):
@@ -282,8 +281,10 @@ class LinReg(Method):
             self.nrepresentations_d[network] = (t - means) / stdevs
 
         # Set `self.pred_power`
-        # If the data is centered, it is the r value. 
+        # If the data is centered, it is the r value.
+        # Set `self.similarities`
         self.pred_power = {network: {} for network in self.representations_d}
+        self.similarities = {network: {} for network in self.representations_d}        
         for network, other_network in tqdm(p(self.representations_d,
                                              self.representations_d),
                                            desc='correlate',
@@ -302,12 +303,14 @@ class LinReg(Method):
             bnorms = torch.norm(UtY, dim=0)
             ynorms = torch.norm(Y, dim=0)
 
-            self.pred_power[network][other_network] = (bnorms / ynorms).cpu()
+            self.pred_power[network][other_network] = (bnorms / ynorms).cpu().numpy()
+            self.similarities[network][other_network] = self.pred_power[network][other_network].mean()
 
-        # Set `self.neuron_sort`
-        # {network: sorted_list}
+        # Set `self.neuron_sort` : {network: sorted_list}
+        # Set `self.neuron_notated_sort` : {network: [(neuron, {other_network: pred_power})]}
         self.neuron_sort = {}
-        # Sort neurons by worst correlation with another network
+        self.neuron_notated_sort = {}
+        # Sort neurons by correlation with another network
         for network in tqdm(self.nrepresentations_d, desc='annotation'):
             self.neuron_sort[network] = sorted(
                     range(self.num_neurons_d[network]),
@@ -317,10 +320,6 @@ class LinReg(Method):
                     reverse=True
                 )
 
-
-    def write_correlations(self, output_file):
-        self.neuron_notated_sort = {}
-        for network in tqdm(self.nrepresentations_d, desc='write'):
             self.neuron_notated_sort[network] = [
                 (
                     neuron,
@@ -332,7 +331,14 @@ class LinReg(Method):
                 for neuron in self.neuron_sort[network]
             ]
 
-        json.dump(self.neuron_notated_sort, open(output_file, 'w'), indent=4)
+    def write_correlations(self, output_file):
+        output = {
+            "pred_power" : self.pred_power,
+            "similarities" : self.similarities,
+            "neuron_sort" : self.neuron_sort,
+            "neuron_notated_sort" : self.neuron_notated_sort,    
+        }
+        torch.save(output, output_file)
 
     def __str__(self):
         return "linreg"
