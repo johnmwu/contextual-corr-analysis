@@ -377,7 +377,7 @@ OK, so it is possible. I should look into a few things:
   - [X] Try getting a heatmap to display
 
 * TODO Change the casing on if network == other_network
-     CLOCK: [2019-08-06 Tue 12:03]
+     CLOCK: [2019-08-06 Tue 12:03]--[2019-08-06 Tue 12:45] =>  0:42
   :PROPERTIES:
   :ARCHIVE_TIME: 2019-08-06 Tue 12:43
   :ARCHIVE_FILE: ~/core/mind/sys/short/proc/main.org
@@ -391,3 +391,154 @@ singular values are not different from one another.
       CLOSED: [2019-08-06 Tue 12:43]
 
 - [X] How to automatically refile to this location?
+
+* DONE For linreg, create a similarity dict. Forgot to do this. 
+  CLOSED: [2019-08-06 Tue 19:30]
+  CLOCK: [2019-08-06 Tue 19:25]--[2019-08-06 Tue 19:30] =>  0:05
+  :PROPERTIES:
+  :ARCHIVE_TIME: 2019-08-06 Tue 19:40
+  :ARCHIVE_FILE: ~/core/mind/sys/short/proc/main.org
+  :ARCHIVE_OLPATH: yonatan/contextual-corr-analysis/Create correlations measures out of corrs and linreg.
+  :ARCHIVE_CATEGORY: main
+  :ARCHIVE_TODO: DONE
+  :END:
+  
+
+* DONE corr
+     CLOSED: [2019-08-06 Tue 19:17]
+     CLOCK: [2019-08-06 Tue 14:42]--[2019-08-06 Tue 19:17] =>  4:35
+  :PROPERTIES:
+  :ARCHIVE_TIME: 2019-08-06 Tue 19:40
+  :ARCHIVE_FILE: ~/core/mind/sys/short/proc/main.org
+  :ARCHIVE_OLPATH: yonatan/contextual-corr-analysis/Create correlations measures out of corrs and linreg.
+  :ARCHIVE_CATEGORY: main
+  :ARCHIVE_TODO: DONE
+  :END:
+Hmm... =neuron_notated_sort= doesn't seem to be the correct data
+structure.
+
+What should it be?
+
+{network: [(neuron, {other: val})]} just like linreg.
+
+Thus, we need to get rid of self.clusters
+
+- [X] Change write_correlations
+- [X] Add similarity functionality
+
+* DONE linreg
+     CLOSED: [2019-08-06 Tue 14:38]
+     CLOCK: [2019-08-06 Tue 13:47]--[2019-08-06 Tue 14:38] =>  0:51
+  :PROPERTIES:
+  :ARCHIVE_TIME: 2019-08-06 Tue 19:40
+  :ARCHIVE_FILE: ~/core/mind/sys/short/proc/main.org
+  :ARCHIVE_OLPATH: yonatan/contextual-corr-analysis/Create correlations measures out of corrs and linreg.
+  :ARCHIVE_CATEGORY: main
+  :ARCHIVE_TODO: DONE
+  :END:
+So actually, the information is all computed already, I would just need
+to write it to a file.
+
+I need to change =write_correlations=.
+
+- [X] Make it save the neuron_sort, neuron_notated_sort, and the
+  pred_power
+  - [X] Edit compute correlations hnb
+  - [X] Copy stuff over to .py file
+  - [X] Edit writing; I think it should use =torch.save= now..
+  - [X] Copy stuff over to .py file
+
+* TODO Edit analysis nb
+  :PROPERTIES:
+  :ARCHIVE_TIME: 2019-08-06 Tue 19:41
+  :ARCHIVE_FILE: ~/core/mind/sys/short/proc/main.org
+  :ARCHIVE_OLPATH: yonatan/contextual-corr-analysis/Create correlations measures out of corrs and linreg.
+  :ARCHIVE_CATEGORY: main
+  :ARCHIVE_TODO: TODO
+  :END:
+- [ ] Change loading, because the formats of the files are different now
+- [ ] Allow using the correlations as similarity measures     
+- [ ] 
+
+This can wait.   
+
+* TODO Regenerate output files for analysis-8
+  :PROPERTIES:
+  :ARCHIVE_TIME: 2019-08-06 Tue 19:41
+  :ARCHIVE_FILE: ~/core/mind/sys/short/proc/main.org
+  :ARCHIVE_OLPATH: yonatan/contextual-corr-analysis/Create correlations measures out of corrs and linreg.
+  :ARCHIVE_CATEGORY: main
+  :ARCHIVE_TODO: TODO
+  :END:
+
+Actually, this can wait.      
+
+* DONE Create correlations measures out of corrs and linreg. 
+  CLOSED: [2019-08-06 Tue 19:41]
+  CLOCK: [2019-08-06 Tue 13:45]--[2019-08-06 Tue 13:47] =>  0:02
+  :PROPERTIES:
+  :ARCHIVE_TIME: 2019-08-06 Tue 19:41
+  :ARCHIVE_FILE: ~/core/mind/sys/short/proc/main.org
+  :ARCHIVE_OLPATH: yonatan/contextual-corr-analysis
+  :ARCHIVE_CATEGORY: main
+  :ARCHIVE_TODO: DONE
+  :END:
+ 
+ You could aggregate values in various ways -- mean, max. 
+ 
+ There are more ways to use cca. For example, take the average of the
+ top k cc values.
+
+ Note: don't skip the pair between a layer and itself, because these
+ won't be 1.
+
+* DONE Prepare for meeting tomorrow morning
+  CLOSED: [2019-08-06 Tue 19:41]
+  :PROPERTIES:
+  :ARCHIVE_TIME: 2019-08-06 Tue 19:41
+  :ARCHIVE_FILE: ~/core/mind/sys/short/proc/main.org
+  :ARCHIVE_OLPATH: yonatan/contextual-corr-analysis
+  :ARCHIVE_CATEGORY: main
+  :ARCHIVE_TODO: DONE
+  :END:
+
+* TODO Change everything to use pickling
+  :PROPERTIES:
+  :ARCHIVE_TIME: 2019-08-07 Wed 11:39
+  :ARCHIVE_FILE: ~/core/mind/sys/short/proc/main.org
+  :ARCHIVE_OLPATH: yonatan/contextual-corr-analysis
+  :ARCHIVE_CATEGORY: main
+  :ARCHIVE_TODO: TODO
+  :END:
+Will need to make everything become NumPy I think.     
+
+* DONE Change everything to use pickling
+    CLOSED: [2019-08-07 Wed 11:49]
+    CLOCK: [2019-08-07 Wed 11:39]--[2019-08-07 Wed 11:49] =>  0:10
+  :PROPERTIES:
+  :ARCHIVE_TIME: 2019-08-07 Wed 11:49
+  :ARCHIVE_FILE: ~/core/mind/sys/short/proc/main.org
+  :ARCHIVE_OLPATH: yonatan/contextual-corr-analysis
+  :ARCHIVE_CATEGORY: main
+  :ARCHIVE_TODO: DONE
+  :END:
+Will need to make everything become NumPy I think.
+
+Wait. When should I make it numpy? Perhaps just at the end.. actually,
+it's not super important...
+
+- [X] maxmin
+- [X] linreg
+- [X] cca
+- [X] lincka
+- [X] rbfcka
+
+* TODO Have a look at results from hassan and nadir
+  CLOCK: [2019-08-07 Wed 11:54]--[2019-08-07 Wed 12:34] =>  0:40
+  :PROPERTIES:
+  :ARCHIVE_TIME: 2019-08-07 Wed 13:49
+  :ARCHIVE_FILE: ~/core/mind/sys/short/proc/main.org
+  :ARCHIVE_OLPATH: yonatan/contextual-corr-analysis
+  :ARCHIVE_CATEGORY: main
+  :ARCHIVE_TODO: TODO
+  :END:

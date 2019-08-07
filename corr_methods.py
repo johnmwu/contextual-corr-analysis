@@ -338,7 +338,9 @@ class LinReg(Method):
             "neuron_sort" : self.neuron_sort,
             "neuron_notated_sort" : self.neuron_notated_sort,    
         }
-        torch.save(output, output_file)
+
+        with open(output_file, "wb") as f:
+            pickle.dump(output, f)
 
     def __str__(self):
         return "linreg"
@@ -438,11 +440,11 @@ class CCA(Method):
             u, s, v = torch.svd(torch.mm(X.t(), Y))
 
             # `self.transforms`, `self.corrs`, `self.sv_similarities`
-            self.transforms[network][other_network] = torch.mm(whitening_transforms[network], u)
-            self.transforms[other_network][network] = torch.mm(whitening_transforms[other_network], v)
+            self.transforms[network][other_network] = torch.mm(whitening_transforms[network], u).cpu().numpy()
+            self.transforms[other_network][network] = torch.mm(whitening_transforms[other_network], v).cpu().numpy()
 
-            self.corrs[network][other_network] = s
-            self.corrs[other_network][network] = s
+            self.corrs[network][other_network] = s.cpu().numpy()
+            self.corrs[other_network][network] = s.cpu().numpy()
 
             self.sv_similarities[network][other_network] = s.mean().item()
             self.sv_similarities[other_network][network] = s.mean().item()
@@ -455,8 +457,8 @@ class CCA(Method):
             Z = self.representations_d[network]
             align = torch.abs(torch.mm(H.t(), Z))
             a = torch.sum(align, dim=1, keepdim=False)
-            self.pw_alignments[network][other_network] = a
-            self.pw_corrs[network][other_network] = s*a
+            self.pw_alignments[network][other_network] = a.cpu().numpy()
+            self.pw_corrs[network][other_network] = (s*a).cpu().numpy()
             self.pw_similarities[network][other_network] = (torch.sum(s*a)/torch.sum(a)).item()
 
             # For Y
@@ -464,29 +466,30 @@ class CCA(Method):
             Z = self.representations_d[other_network]
             align = torch.abs(torch.mm(H.t(), Z))
             a = torch.sum(align, dim=1, keepdim=False)
-            self.pw_alignments[other_network][network] = a
-            self.pw_corrs[other_network][network] = s*a
+            self.pw_alignments[other_network][network] = a.cpu().numpy()
+            self.pw_corrs[other_network][network] = (s*a).cpu().numpy()
             self.pw_similarities[other_network][network] = (torch.sum(s*a)/torch.sum(a)).item()
 
     def write_correlations(self, output_file):
         if self.save_cca_transforms:
             output = {
                 "transforms": self.transforms,
-                "corrs": self.corrs.cpu().numpy(),
+                "corrs": self.corrs,
                 "sv_similarities": self.sv_similarities,
                 "pw_alignments": self.pw_alignments,
-                "pw_corrs": self.pw_corrs.cpu().numpy(),
+                "pw_corrs": self.pw_corrs,
                 "pw_similarities": self.pw_similarities,
             }
         else:
             output = {
-                "corrs": self.corrs.cpu().numpy(),
+                "corrs": self.corrs,
                 "sv_similarities": self.sv_similarities,
                 "pw_alignments": self.pw_alignments,
-                "pw_corrs": self.pw_corrs.cpu().numpy(),
+                "pw_corrs": self.pw_corrs,
                 "pw_similarities": self.pw_similarities,
             }
-        torch.save(output, output_file)
+        with open(output_file, "wb") as f:
+            pickle.dump(output, f)
 
     def __str__(self):
         return "cca"
@@ -498,94 +501,6 @@ class LinCKA(Method):
         # Here, normalize_dimensions means center. TODO: change. 
         super().__init__(num_neurons_d, representations_d, device)
         self.normalize_dimensions = normalize_dimensions
-
-    def compute_correlations(self):
-        def center_gram(G):
-            means = G.mean(0)
-            means -= means.mean() / 2
-            return G - means[None, :] - means[:, None]
-
-        def gram_rbf(X, threshold=1.0):
-            if type(X) == torch.Tensor:
-                dot_products = X @ X.t()
-                sq_norms = dot_products.diag()
-                sq_distances = -2*dot_products + sq_norms[:,None] + sq_norms[None,:]
-                sq_median_distance = sq_distances.median()
-                return torch.exp(-sq_distances / (2*threshold**2 * sq_median_distance))
-            elif type(X) == da.Array:
-                dot_products = X @ X.T
-                sq_norms = da.diag(dot_products)
-                sq_distances = -2*dot_products + sq_norms[:,None] + sq_norms[None,:]
-                sq_median_distance = da.percentile(sq_distances.ravel(), 50)
-                return da.exp((-sq_distances / (2*threshold**2 * sq_median_distance)))
-            else:
-                raise ValueError
-
-        # Set `limit`
-        n_words = next(iter(self.representations_d.values())).size()[0]
-        if type(self.limit) == float:
-            limit = int(n_words * self.limit)
-        elif type(self.limit) == int:
-            limit = self.limit
-        else:
-            limit = self.limit
-
-        # Set `daskp`
-        # Logic could become more complex
-        daskp = True if self.device == torch.device('cpu') else False
-
-        # dask setup
-        if daskp:
-            from dask.distributed import Client, progress
-            client = Client(processes=False, threads_per_worker=32, n_workers=1, memory_limit='200GB')
-
-        # Set `self.similarities`
-        # {network: {other: rbfcka_similarity}}
-        self.similarities = {network: {} for network in self.representations_d}
-        for network, other_network in tqdm(p(self.representations_d,
-                                             self.representations_d),
-                                           desc='rbfcka',
-                                           total=len(self.representations_d)**2):
-
-            if network == other_network:
-                continue
-
-            if other_network in self.similarities[network]: 
-                continue
-
-            if daskp:
-                c = self.dask_chunk_size
-                X = da.from_array(np.asarray(self.representations_d[network][:limit]), chunks=(c, c))
-                Y = da.from_array(np.asarray(self.representations_d[other_network][:limit]), chunks=(c, c))
-
-                Gx = center_gram(gram_rbf(X))
-                Gy = center_gram(gram_rbf(Y))
-
-                scaled_hsic = da.dot(Gx.ravel(), Gy.ravel())
-                norm_gx = da.sqrt(da.dot(Gx.ravel(), Gx.ravel()))
-                norm_gy = da.sqrt(da.dot(Gy.ravel(), Gy.ravel()))
-
-                sim = (scaled_hsic / (norm_gx*norm_gy)).compute()
-            else:
-                device = self.device
-                X = self.representations_d[network][:limit].to(device)
-                Y = self.representations_d[other_network][:limit].to(device)
-
-                # TO DO: random subset of data using limit?
-                Gx = center_gram(gram_rbf(X))
-                Gy = center_gram(gram_rbf(Y))
-
-                scaled_hsic = torch.dot(Gx.view(-1), Gy.view(-1)).cpu().item()
-                norm_gx = torch.norm(Gx, p="fro").cpu().item()
-                norm_gy = torch.norm(Gy, p="fro").cpu().item()
-
-                sim = scaled_hsic / (norm_gx*norm_gy)
-
-            self.similarities[network][other_network] = sim
-            self.similarities[other_network][network] = sim
-
-
-
 
     def compute_correlations(self):
         """
@@ -627,7 +542,12 @@ class LinCKA(Method):
             self.similarities[other_network][network] = sim
 
     def write_correlations(self, output_file):
-        torch.save(self.similarities, output_file)
+        output = {
+            "similarities": self.similarities,
+        }
+
+        with open(output_file, "wb") as f:
+            pickle.dump(output, f)
 
     def __str__(self):
         return "lincka"
@@ -729,7 +649,12 @@ class RBFCKA(Method):
 
 
     def write_correlations(self, output_file):
-        torch.save(self.similarities, output_file)
+        output = {
+            "similarities": self.similarities,
+        }
+
+        with open(output_file, "wb") as f:
+            pickle.dump(output, f)
 
     def __str__(self):
         return "rbfcka"

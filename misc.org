@@ -238,6 +238,11 @@
     points of RNNs. Has anyone done this with ELMo? Off the top of my
     head, I can't think of what interpretation can be given to these
     fixed points... it's an interesting idea though. 
+  written Mon Aug  5 11:51:33 EDT 2019
+  - What determines what a network learns?
+    - Architecture
+    - Number of layers
+    - Objective
 
 
 - Papers read
