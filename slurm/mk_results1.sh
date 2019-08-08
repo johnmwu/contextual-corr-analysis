@@ -1,7 +1,8 @@
 #!/bin/bash
 
-results="/data/sls/temp/johnmwu/contextual-corr-analysis/results1"
-repr_files="repr_files8" # add xlnet
-opt_fname="opt1"
+OUTPUT_PREFIX=/data/sls/temp/johnmwu/contextual-corr-analysis/mk_results1-1-
+OUTPUT_SUFFIX=.out
 
-python ../main.py "${repr_files}" "${results}" --opt_fname "${opt_fname}" --methods mincorr maxcorr minlinreg maxlinreg cca lincka
+for method in maxcorr mincorr maxlinreg minlinreg cca lincka; do
+    sbatch --job-name=mk_results1-$method --output="${OUTPUT_PREFIX}${method}${OUTPUT_SUFFIX}" mk_results1-helper.sh $method
+done

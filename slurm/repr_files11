@@ -1,0 +1,16 @@
+/data/sls/temp/belinkov/contextual-corr-analysis/contextualizers/bert_large_cased/ptb_pos_dev.hdf5
+/data/sls/temp/belinkov/contextual-corr-analysis/contextualizers/openai_transformer/ptb_pos_dev.hdf5
+/data/sls/temp/belinkov/contextual-corr-analysis/contextualizers/bert_base_cased/ptb_pos_dev.hdf5
+/data/sls/temp/belinkov/contextual-corr-analysis/contextualizers/elmo_original/ptb_pos_dev.hdf5
+/data/sls/temp/belinkov/contextual-corr-analysis/contextualizers/calypso_transformer_6_512_base/ptb_pos_dev.hdf5
+/data/sls/temp/belinkov/contextual-corr-analysis/contextualizers/elmo_4x4096_512/ptb_pos_dev.hdf5
+/data/sls/temp/belinkov/contextual-corr-analysis/contextualizers/xlnet_large_cased/ptb_pos_dev.hdf5
+/data/sls/temp/belinkov/contextual-corr-analysis/contextualizers/gpt2_small/ptb_pos_dev.hdf5
+/data/sls/temp/belinkov/contextual-corr-analysis/contextualizers/xlm-mlm-enro-1024/ptb_pos_dev.hdf5
+/data/sls/temp/belinkov/contextual-corr-analysis/contextualizers/xlm-mlm-enfr-1024/ptb_pos_dev.hdf5
+/data/sls/temp/belinkov/contextual-corr-analysis/contextualizers/gpt2_medium/ptb_pos_dev.hdf5
+/data/sls/temp/belinkov/contextual-corr-analysis/contextualizers/xlm-mlm-en-2048/ptb_pos_dev.hdf5
+/data/sls/temp/belinkov/contextual-corr-analysis/contextualizers/xlm-clm-ende-1024/ptb_pos_dev.hdf5
+/data/sls/temp/belinkov/contextual-corr-analysis/contextualizers/xlnet_base_cased/ptb_pos_dev.hdf5
+/data/sls/temp/belinkov/contextual-corr-analysis/contextualizers/xlm-mlm-ende-1024/ptb_pos_dev.hdf5
+/data/sls/temp/belinkov/contextual-corr-analysis/contextualizers/xlm-clm-enfr-1024/ptb_pos_dev.hdf5

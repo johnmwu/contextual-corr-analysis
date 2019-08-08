@@ -542,3 +542,70 @@ it's not super important...
   :ARCHIVE_CATEGORY: main
   :ARCHIVE_TODO: TODO
   :END:
+
+* DONE Commit revised cca
+    CLOSED: [2019-08-07 Wed 14:06]
+  :PROPERTIES:
+  :ARCHIVE_TIME: 2019-08-07 Wed 14:06
+  :ARCHIVE_FILE: ~/core/mind/sys/short/proc/main.org
+  :ARCHIVE_OLPATH: yonatan/contextual-corr-analysis
+  :ARCHIVE_CATEGORY: main
+  :ARCHIVE_TODO: DONE
+  :END:
+- [X] Overwrite previous commit    
+
+* DONE if network==other_network in maxmin and linreg
+    CLOSED: [2019-08-08 Thu 12:34]
+  :PROPERTIES:
+  :ARCHIVE_TIME: 2019-08-08 Thu 12:37
+  :ARCHIVE_FILE: ~/core/mind/sys/short/proc/main.org
+  :ARCHIVE_OLPATH: yonatan/contextual-corr-analysis
+  :ARCHIVE_CATEGORY: main
+  :ARCHIVE_TODO: DONE
+  :END:
+Consensus is that this is unnecessary. My email to Yonatan:
+
+Well, maxmincorr is extracted from the correlation matrix, so it
+contains strictly more information than just the index and correlation
+of the most correlated neuron pair.
+
+My point is that I don't think we should remove the line
+
+            if network == other_network:
+                continue
+
+In MaxMinCorr. The reasoning is:
+- If we did, I don't think it would tell us much. All the info we'd have
+  would be pairs. The whole correlation matrix is strictly better.
+- If we did and added the whole correlation matrix to the output for
+  every pair, our output would be way too big, and most of it would be
+  unused.
+ 
+Thus, I feel like this would be better to add as a different method,
+probably in a completely different script. Even semantically, the
+=corr_methods.py= module is supposed to be comparing representations
+across layers, not intra-layer representations. Also, intra-layer
+representations will require completely different methods, because the
+goal is no longer determining correlation.
+
+You also mentioned doing this for LinReg. What exactly did you mean? I'm
+not sure how to interpret regressing the rest of the layer onto a
+particular neuron means. I feel like the interpretation would be the
+opposite of the others---the higher the predictive power, the more
+useless the neuron is, because it just means that it's direction can
+already be expressed as a linear combination of others. This isn't
+precise because the learning dynamics affects this, but again, I feel
+like it has to be treated differently.
+
+Also, it might screw up the neuron sorts. 
+
+* DONE Reorganize the =slurm= directory
+    CLOSED: [2019-08-08 Thu 15:47]
+  :PROPERTIES:
+  :ARCHIVE_TIME: 2019-08-08 Thu 15:47
+  :ARCHIVE_FILE: ~/core/mind/sys/short/proc/main.org
+  :ARCHIVE_OLPATH: yonatan/contextual-corr-analysis
+  :ARCHIVE_CATEGORY: main
+  :ARCHIVE_TODO: DONE
+  :END:
+- [X] Change 8 and 11 to use the mk_results1 style    

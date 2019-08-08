@@ -265,39 +265,43 @@ class LinReg(Method):
         """
         Set `self.neuron_sort`. 
         """
+
         # Set `means_d`, `stdevs_d`
         # Set `self.nrepresentations_d` to be normalized. 
         means_d = {}
         stdevs_d = {}
         self.nrepresentations_d = {}
+        self.lsingularv_d = {}
 
         for network in tqdm(self.representations_d, desc='mu, sigma'):
-            t = self.representations_d[network]
+            t = self.representations_d[network].to(self.device)
             means = t.mean(0, keepdim=True)
             stdevs = (t - means).pow(2).mean(0, keepdim=True).pow(0.5)
 
-            means_d[network] = means
-            stdevs_d[network] = stdevs
-            self.nrepresentations_d[network] = (t - means) / stdevs
+            means_d[network] = means.cpu()
+            stdevs_d[network] = stdevs.cpu()
+            self.nrepresentations_d[network] = ((t - means) / stdevs).cpu()
+            self.lsingularv_d[network], _, _ = torch.svd(self.nrepresentations_d[network])
+
+        del self.representations_d
 
         # Set `self.pred_power`
         # If the data is centered, it is the r value.
         # Set `self.similarities`
-        self.pred_power = {network: {} for network in self.representations_d}
-        self.similarities = {network: {} for network in self.representations_d}        
-        for network, other_network in tqdm(p(self.representations_d,
-                                             self.representations_d),
+        self.pred_power = {network: {} for network in self.nrepresentations_d}
+        self.similarities = {network: {} for network in self.nrepresentations_d}        
+        for network, other_network in tqdm(p(self.nrepresentations_d,
+                                             self.nrepresentations_d),
                                            desc='correlate',
-                                           total=len(self.representations_d)**2):
+                                           total=len(self.nrepresentations_d)**2):
 
             if network == other_network:
                 continue
 
-            X = self.nrepresentations_d[other_network].to(self.device)
+            U = self.lsingularv_d[other_network].to(self.device)
             Y = self.nrepresentations_d[network].to(self.device)
 
             # SVD method of linreg
-            U, S, V = torch.svd(X) 
             UtY = torch.mm(U.t(), Y) # b for Ub = Y
 
             bnorms = torch.norm(UtY, dim=0)
@@ -305,6 +309,7 @@ class LinReg(Method):
 
             self.pred_power[network][other_network] = (bnorms / ynorms).cpu().numpy()
             self.similarities[network][other_network] = self.pred_power[network][other_network].mean()
+
 
         # Set `self.neuron_sort` : {network: sorted_list}
         # Set `self.neuron_notated_sort` : {network: [(neuron, {other_network: pred_power})]}

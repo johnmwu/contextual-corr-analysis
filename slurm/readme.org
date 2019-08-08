@@ -11,8 +11,13 @@ following meanings are associated with job numbers:
 7. All layers, 6 orig models (no xlnet), corrs linregs lincka cca
    
    In general, superseded by 8. 
-8. All layers, all models, all methods. 
+8. First 7 models (2 elmo, 2 bert, xlnet large, gpt-1, calypso)
    
-   Incomplete as of Mon Jul 22 19:10:43 EDT 2019
-9. Test for RBF using limit 10000
-10. Test RBF using no limit
+   Frozen as of Wed Aug  7 18:12:12 EDT 2019
+9. Test 
+   
+   RBF using limit 10000
+10. Test 
+    
+    RBF using no limit. Failed. 
+11. 
