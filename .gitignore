@@ -4,7 +4,7 @@
 */*.*~
 
 dask-worker-space
-temp
+temp*
 __pycache__
 .ipynb_checkpoints
 \#*

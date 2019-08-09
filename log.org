@@ -609,3 +609,69 @@ Also, it might screw up the neuron sorts.
   :ARCHIVE_TODO: DONE
   :END:
 - [X] Change 8 and 11 to use the mk_results1 style    
+
+* TODO Why did minlinreg fail?
+     CLOCK: [2019-08-08 Thu 18:49]--[2019-08-09 Fri 12:04] => 17:15
+  :PROPERTIES:
+  :ARCHIVE_TIME: 2019-08-08 Thu 18:56
+  :ARCHIVE_FILE: ~/core/mind/sys/short/proc/main.org
+  :ARCHIVE_OLPATH: yonatan/contextual-corr-analysis/Top k correlations in SVCCA?
+  :ARCHIVE_CATEGORY: main
+  :ARCHIVE_TODO: TODO
+  :END:
+Wait, I don't think it did.      
+
+* DONE Rewrite maxmin and meanstd computations
+     CLOSED: [2019-08-09 Fri 19:05]
+     CLOCK: [2019-08-09 Fri 18:40]--[2019-08-09 Fri 19:05] =>  0:25
+     CLOCK: [2019-08-08 Thu 17:24]--[2019-08-08 Thu 18:49] =>  1:25
+  :PROPERTIES:
+  :ARCHIVE_TIME: 2019-08-09 Fri 19:06
+  :ARCHIVE_FILE: ~/core/mind/sys/short/proc/main.org
+  :ARCHIVE_OLPATH: yonatan/contextual-corr-analysis/Visualizations: cmaps, more sentences, more neurons
+  :ARCHIVE_CATEGORY: main
+  :ARCHIVE_TODO: DONE
+  :END:
+I feel like many of these computations can be rewritten so they read
+from files on disk, and operate on files on disk. I feel like this is
+particularly true of simple statistics like mean, std, etc.
+
+So, what should the format of such a file be?
+
+{
+    "mean": {model : means},
+    "std" : {model : std},
+    "max" : {model : max},
+    "min" : {model : min},
+}
+
+Ahh, shit.
+
+Waiting on jobid 7691. Great. Works?
+
+Great. Waiting on jobid 7694. 
+
+* DONE Convert all computers to ubuntu 18
+   CLOSED: [2019-08-09 Fri 19:50]
+   CLOCK: [2019-08-09 Fri 19:06]--[2019-08-09 Fri 19:50] =>  0:44
+   CLOCK: [2019-08-09 Fri 18:03]--[2019-08-09 Fri 18:04] =>  0:01
+   CLOCK: [2019-08-09 Fri 18:03]--[2019-08-09 Fri 18:03] =>  0:00
+   CLOCK: [2019-08-09 Fri 18:03]--[2019-08-09 Fri 18:03] =>  0:00
+   CLOCK: [2019-08-09 Fri 17:51]--[2019-08-09 Fri 18:03] =>  0:12
+   CLOCK: [2019-08-09 Fri 15:34]--[2019-08-09 Fri 15:54] =>  0:20
+   CLOCK: [2019-08-09 Fri 14:53]--[2019-08-09 Fri 15:16] =>  0:23
+   CLOCK: [2019-08-09 Fri 12:04]--[2019-08-09 Fri 12:44] =>  0:40
+  :PROPERTIES:
+  :ARCHIVE_TIME: 2019-08-09 Fri 19:50
+  :ARCHIVE_FILE: ~/core/mind/sys/short/proc/main.org
+  :ARCHIVE_OLPATH: yonatan
+  :ARCHIVE_CATEGORY: main
+  :ARCHIVE_TODO: DONE
+  :END:
+Waiting on Jim to see if I can be added to =sls-sudoers=.
+
+Waiting on installers on quad, beorn, and sugar to finish.
+
+- [X] begin installer on chris's computer
+Wait for that to finish
+- [X] Login on all machines, make sure that /data/sls is accessible. 

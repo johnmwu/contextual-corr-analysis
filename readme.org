@@ -37,8 +37,8 @@ debugging) and structure broken down.
 
 Temporary files needed by hnb's are also here. 
 ** tests
-Testing correctness. Includes slurm scripts, notebooks that load in
-generated results (to see if the generated results work, etc.
+Testing correctness of code for bugs. Includes slurm scripts, notebooks
+that load in generated results (to see if the generated results work). 
 ** slurm
 SLURM scripts, as well as additional files to aid the scripts. 
 

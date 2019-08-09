@@ -8,7 +8,7 @@
 #SBATCH --time=24:00:00         
 
 method=$1
-results="/data/sls/temp/johnmwu/contextual-corr-analysis/results_11"
+results="/data/sls/temp/johnmwu/contextual-corr-analysis/results11"
 repr_files="repr_files11"
 opt_fname="opt11"
 

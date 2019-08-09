@@ -560,7 +560,7 @@ class LinCKA(Method):
 
 class RBFCKA(Method):
     def __init__(self, num_neurons_d, representations_d, device=None,
-                 limit=None, dask_chunk_size=50_000):
+                 limit=None, dask_chunk_size=25_000):
         super().__init__(num_neurons_d, representations_d, device)
         self.limit = limit
         self.dask_chunk_size = dask_chunk_size
@@ -604,7 +604,7 @@ class RBFCKA(Method):
         if daskp:
             from dask.distributed import Client, progress
             client = Client(processes=False, threads_per_worker=32,
-                            n_workers=1, memory_limit='160GB',
+                            n_workers=1, memory_limit='100GB',
                             local_dir="/data/sls/temp/johnmwu/dask-worker-space")
 
         # Set `self.similarities`
