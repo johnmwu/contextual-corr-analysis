@@ -567,6 +567,7 @@ class RBFCKA(Method):
 
         # Set `daskp`
         daskp = True if self.device == torch.device('cpu') else False
+        print("daskp value: {0}".format(daskp))
 
         # Set `self.similarities`
         # {network: {other: rbfcka_similarity}}

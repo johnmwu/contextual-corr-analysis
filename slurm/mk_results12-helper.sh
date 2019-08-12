@@ -5,7 +5,7 @@
 #SBATCH --nodes=1-1            
 #SBATCH --cpus-per-task=4            
 #SBATCH --mem=40GB              
-#SBATCH --time=4:00:00
+#SBATCH --time=24:00:00
 
 limit=$1
 results="/data/sls/temp/johnmwu/contextual-corr-analysis/results12"

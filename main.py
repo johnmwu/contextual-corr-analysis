@@ -77,6 +77,8 @@ def main(methods, representation_files, output_file, opt_fname=None,
     else:
         device = torch.device('cpu')
 
+    print("Using device: {0}".format(device))
+
     # Set `representation_fname_l`, and options
     with open(representation_files) as f:
         representation_fname_l = [line.strip() for line in f]

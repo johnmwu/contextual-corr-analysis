@@ -675,3 +675,66 @@ Waiting on installers on quad, beorn, and sugar to finish.
 - [X] begin installer on chris's computer
 Wait for that to finish
 - [X] Login on all machines, make sure that /data/sls is accessible. 
+
+* DONE [#A] Top k correlations in SVCCA?
+    CLOSED: [2019-08-12 Mon 13:42]
+    CLOCK: [2019-08-05 Mon 14:05]--[2019-08-05 Mon 14:22] =>  0:17
+  :PROPERTIES:
+  :ARCHIVE_TIME: 2019-08-12 Mon 13:42
+  :ARCHIVE_FILE: ~/core/mind/sys/short/proc/main.org
+  :ARCHIVE_OLPATH: yonatan/contextual-corr-analysis
+  :ARCHIVE_CATEGORY: main
+  :ARCHIVE_TODO: DONE
+  :END:
+
+I don't think it's useful to put code for it in =corr_methods.py=. I
+should just load the canonical correlations, and do everything directly.
+
+There is also an interesting idea: could I get the heatmap to change, as
+you change the value of k?
+
+Well, for PWCCA, this is not as straightforward. It would require more
+computation. Also, how would you even do it?
+** DONE Rerun for svcca
+     CLOSED: [2019-08-06 Tue 12:02]
+Running, as of Mon Aug  5 19:23:29 EDT 2019
+** DONE Rerun for svcca
+     CLOSED: [2019-08-07 Wed 13:27]
+In progress
+** DONE Fix pwcca stuff
+     CLOSED: [2019-08-08 Thu 12:24]
+     CLOCK: [2019-08-08 Thu 12:24]--[2019-08-08 Thu 12:24] =>  0:00
+- [X] Create a test script     
+- [X] Run the test script
+- [X] Get results
+- [X] Rerun
+- [X] Get results
+** DONE Regen nb for analysis-8
+     CLOSED: [2019-08-09 Fri 18:39]
+     CLOCK: [2019-08-09 Fri 18:04]--[2019-08-09 Fri 18:29] =>  0:25
+     CLOCK: [2019-08-09 Fri 17:22]--[2019-08-09 Fri 17:51] =>  0:29
+     CLOCK: [2019-08-09 Fri 15:56]--[2019-08-09 Fri 16:02] =>  0:06
+     CLOCK: [2019-08-09 Fri 12:44]--[2019-08-09 Fri 14:53] =>  2:09
+     CLOCK: [2019-08-08 Thu 12:24]--[2019-08-08 Thu 12:49] =>  0:25
+Actually, I should regen analysis-8 entirely.
+- [X] Run all methods again
+- [X] Get results
+  
+Ahh, shit. minlinreg failed. Actually, I don't think it failed.
+
+waiting on jobid 5275, which is maxlinreg. OK, everything looks good.
+- [X] Regen
+  - [X] Make test sbatchable
+  - [X] Wait on results
+    
+    Wait, so is the sbatch finished? Yep
+  - [X] Regen first for the test
+    
+    We need to get the analysis nb working again. 
+    - [X] Create a generic =update= function that works for both pw and
+      sv.
+    - [X] Create interactive heatmaps for maxmincorr and linregcorr
+      - [X] Reindex to make rows = columns
+  - [X] Copy test over, regen
+    
+    Waiting on notebook analysis-8 to finish
