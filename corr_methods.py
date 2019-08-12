@@ -11,34 +11,6 @@ import pickle
 def load_representations(representation_fname_l, limit=None,
                          layerspec_l=None, first_half_only_l=False,
                          second_half_only_l=False):
-    """
-    Load data. Returns `num_neurons_d` and `representations_d`. 
-
-    Parameters
-    ----
-    representation_fname_l : list<str>
-        List of filenames. 
-    limit : int or None
-        Cap on the number of data points (here, sentences). None if no cap.
-    layer : TO DO
-        Layer to correlate. None if the top layer. 
-
-        Currently (d1c0249), you are forced to always correlate the same
-        layer of each model.
-    first_half_only : TO DO
-        Only use the first half of the neurons.
-    second_half_only : TO DO
-        Only use the second half of the neurons. 
-
-    Returns
-    ----
-    num_neurons_d : dict<str, int>
-        Dict of {repr_name : num_neurons}
-    representations_d : dict<str, tensor>
-        Dict of {repr_name : (len_data, num_neurons) tensor}. The tensor
-        contains the activations for a given model on each input data
-        point. 
-    """
     def fname2mname(fname):
         """
         "filename to model name". 
@@ -47,9 +19,7 @@ def load_representations(representation_fname_l, limit=None,
 
     num_neurons_d = {} 
     representations_d = {} 
-
-    # formatting follows contexteval:
-    # https://github.com/nelson-liu/contextual-repr-analysis/blob/master/contexteval/contextualizers/precomputed_contextualizer.py
+    
     for loop_var in tqdm(zip(representation_fname_l, layerspec_l,
                              first_half_only_l, second_half_only_l)):
         fname, layerspec, first_half_only, second_half_only = loop_var
@@ -78,21 +48,27 @@ def load_representations(representation_fname_l, limit=None,
         for layer in layers:
             # Create `representations_l`
             representations_l = []
+            word_count = 0
             for sentence_ix in indices: 
-                # Set `dim`
-                dim = len(activations_h5[sentence_ix].shape)
+                # Set `dim`, `n_word`, update `word_count`
+                shape = activations_h5[sentence_ix].shape
+                dim = len(shape)
                 if not (dim == 2 or dim == 3):
                     raise ValueError('Improper array dimension in file: ' +
                                      fname + "\nShape: " +
                                      str(activations_h5[sentence_ix].shape))
+                if dim == 3:
+                    n_word = shape[1]
+                elif dim == 2:
+                    n_word = shape[0]
+                word_count += n_word
 
                 # Create `activations`
                 if layer == "full":
                     activations = torch.FloatTensor(activations_h5[sentence_ix])
                     if dim == 3:
                         activations = activations.permute(1, 0, 2)
-                        nword = activations.size()[0]
-                        activations = activations.contiguous().view(nword, -1)
+                        activations = activations.contiguous().view(n_word, -1)
                 else:
                     activations = torch.FloatTensor(activations_h5[sentence_ix][layer] if dim==3 
                                                         else activations_h5[sentence_ix])
@@ -108,14 +84,17 @@ def load_representations(representation_fname_l, limit=None,
 
                 representations_l.append(representations)
 
+                # If we've loaded in enough words already, stop
+                if word_count >= limit:
+                    break
+
             # update
             model_name = "{model}_{layer}".format(model=fname2mname(fname), 
                                                   layer=layer)
             num_neurons_d[model_name] = representations_l[0].size()[-1]
-            representations_d[model_name] = torch.cat(representations_l)
-
-    return (num_neurons_d, representations_d)
-
+            representations_d[model_name] = torch.cat(representations_l)[:limit]   
+    
+    return num_neurons_d, representations_d
 
 class Method(object):
     """Abstract representation of a correlation method. 
@@ -560,9 +539,8 @@ class LinCKA(Method):
 
 class RBFCKA(Method):
     def __init__(self, num_neurons_d, representations_d, device=None,
-                 limit=None, dask_chunk_size=25_000):
+                 dask_chunk_size=25_000):
         super().__init__(num_neurons_d, representations_d, device)
-        self.limit = limit
         self.dask_chunk_size = dask_chunk_size
 
     def compute_correlations(self):
@@ -587,25 +565,8 @@ class RBFCKA(Method):
             else:
                 raise ValueError
 
-        # Set `limit`
-        n_words = next(iter(self.representations_d.values())).size()[0]
-        if type(self.limit) == float:
-            limit = int(n_words * self.limit)
-        elif type(self.limit) == int:
-            limit = self.limit
-        else:
-            limit = self.limit
-
         # Set `daskp`
-        # Logic could become more complex
         daskp = True if self.device == torch.device('cpu') else False
-
-        # dask setup
-        if daskp:
-            from dask.distributed import Client, progress
-            client = Client(processes=False, threads_per_worker=32,
-                            n_workers=1, memory_limit='100GB',
-                            local_dir="/data/sls/temp/johnmwu/dask-worker-space")
 
         # Set `self.similarities`
         # {network: {other: rbfcka_similarity}}
@@ -623,8 +584,8 @@ class RBFCKA(Method):
 
             if daskp:
                 c = self.dask_chunk_size
-                X = da.from_array(np.asarray(self.representations_d[network][:limit]), chunks=(c, c))
-                Y = da.from_array(np.asarray(self.representations_d[other_network][:limit]), chunks=(c, c))
+                X = da.from_array(np.asarray(self.representations_d[network]), chunks=(c, c))
+                Y = da.from_array(np.asarray(self.representations_d[other_network]), chunks=(c, c))
 
                 Gx = center_gram(gram_rbf(X))
                 Gy = center_gram(gram_rbf(Y))
@@ -636,10 +597,9 @@ class RBFCKA(Method):
                 sim = (scaled_hsic / (norm_gx*norm_gy)).compute()
             else:
                 device = self.device
-                X = self.representations_d[network][:limit].to(device)
-                Y = self.representations_d[other_network][:limit].to(device)
+                X = self.representations_d[network].to(device)
+                Y = self.representations_d[other_network].to(device)
 
-                # TO DO: random subset of data using limit?
                 Gx = center_gram(gram_rbf(X))
                 Gy = center_gram(gram_rbf(Y))
 
