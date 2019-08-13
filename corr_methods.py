@@ -15,7 +15,7 @@ def load_representations(representation_fname_l, limit=None,
         """
         "filename to model name". 
         """
-        return basename(dirname(fname))
+        return '-'.join([basename(dirname(fname)), basename(fname)])
 
     num_neurons_d = {} 
     representations_d = {} 
@@ -85,7 +85,7 @@ def load_representations(representation_fname_l, limit=None,
                 representations_l.append(representations)
 
                 # If we've loaded in enough words already, stop
-                if word_count >= limit:
+                if limit is not None and word_count >= limit:
                     break
 
             # update

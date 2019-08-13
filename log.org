@@ -738,3 +738,19 @@ waiting on jobid 5275, which is maxlinreg. OK, everything looks good.
   - [X] Copy test over, regen
     
     Waiting on notebook analysis-8 to finish
+
+* DONE CCA
+      CLOSED: [2019-08-13 Tue 13:59]
+      CLOCK: [2019-08-13 Tue 12:41]--[2019-08-13 Tue 13:59] =>  1:18
+  :PROPERTIES:
+  :ARCHIVE_TIME: 2019-08-13 Tue 13:59
+  :ARCHIVE_FILE: ~/core/mind/sys/short/proc/main.org
+  :ARCHIVE_OLPATH: yonatan/contextual-corr-analysis/Add the more models suggested by yonatan./Look at errors. Some errors may be due to memory; should try and fix these.
+  :ARCHIVE_CATEGORY: main
+  :ARCHIVE_TODO: DONE
+  :END:
+Shit... this may actually be coded wrong. Ahhhhhhh shit.
+
+Okay, well would it be good now? What is taking up memory? Yeah, should
+be good now. If I give 240GB, it should be all g. 
+
