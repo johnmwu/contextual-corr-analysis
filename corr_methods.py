@@ -241,10 +241,6 @@ class LinReg(Method):
         self.op = op
 
     def compute_correlations(self):
-        """
-        Set `self.neuron_sort`. 
-        """
-
         # Set `means_d`, `stdevs_d`
         # Set `self.nrepresentations_d` to be normalized. 
         means_d = {}
@@ -262,7 +258,7 @@ class LinReg(Method):
             self.nrepresentations_d[network] = ((t - means) / stdevs).cpu()
             self.lsingularv_d[network], _, _ = torch.svd(self.nrepresentations_d[network])
 
-        del self.representations_d
+            self.representations_d[network] = None # free up memory
 
         # Set `self.pred_power`
         # If the data is centered, it is the r value.
