@@ -354,7 +354,7 @@ class MinLinReg(LinReg):
 
 class CCA(Method):
     def __init__(self, num_neurons_d, representations_d, device=None,
-                 percent_variance=0.99, normalize_dimensions=True,
+                 percent_variance=0.99, normalize_dimensions=False,
                  save_cca_transforms=False):
         super().__init__(num_neurons_d, representations_d, device)
 
@@ -364,7 +364,7 @@ class CCA(Method):
 
     def compute_correlations(self):
         # Normalize
-        # Set `self.nrepresentations_d`
+        # Set `self.nrepresentations_d`, "normalized representations". Call it this regardless of if it's actually "normalized"
         self.nrepresentations_d = {}
         if self.normalize_dimensions:
             for network in tqdm(self.representations_d, desc='mu, sigma'):
@@ -373,6 +373,8 @@ class CCA(Method):
                 stdevs = t.std(0, keepdim=True)
 
                 self.nrepresentations_d[network] = (t - means) / stdevs
+        else:
+            self.nrepresentations_d = self.representations_d
 
         # Set `whitening_transforms`, `pca_directions`
         # {network: whitening_tensor}
@@ -387,8 +389,10 @@ class CCA(Method):
 
             print('For network', network, 'wanted size is', wanted_size)
 
-            whitening_transform = torch.mm(V, torch.diag(1/S))
-            whitening_transforms[network] = whitening_transform[:, :wanted_size]
+            if self.save_cca_transforms:
+                whitening_transform = torch.mm(V, torch.diag(1/S))
+                whitening_transforms[network] = whitening_transform[:, :wanted_size]
+
             pca_directions[network] = U[:, :wanted_size]
 
         # Set 
@@ -424,11 +428,12 @@ class CCA(Method):
             u, s, v = torch.svd(torch.mm(X.t(), Y))
 
             # `self.transforms`, `self.corrs`, `self.sv_similarities`
-            self.transforms[network][other_network] = torch.mm(whitening_transforms[network], u).cpu().numpy()
-            self.transforms[other_network][network] = torch.mm(whitening_transforms[other_network], v).cpu().numpy()
+            if self.save_cca_transforms:
+                self.transforms[network][other_network] = torch.mm(whitening_transforms[network], u)
+                self.transforms[other_network][network] = torch.mm(whitening_transforms[other_network], v)
 
-            self.corrs[network][other_network] = s.cpu().numpy()
-            self.corrs[other_network][network] = s.cpu().numpy()
+            self.corrs[network][other_network] = s
+            self.corrs[other_network][network] = s
 
             self.sv_similarities[network][other_network] = s.mean().item()
             self.sv_similarities[other_network][network] = s.mean().item()
@@ -441,8 +446,8 @@ class CCA(Method):
             Z = self.representations_d[network]
             align = torch.abs(torch.mm(H.t(), Z))
             a = torch.sum(align, dim=1, keepdim=False)
-            self.pw_alignments[network][other_network] = a.cpu().numpy()
-            self.pw_corrs[network][other_network] = (s*a).cpu().numpy()
+            self.pw_alignments[network][other_network] = a
+            self.pw_corrs[network][other_network] = s*a
             self.pw_similarities[network][other_network] = (torch.sum(s*a)/torch.sum(a)).item()
 
             # For Y
@@ -450,8 +455,8 @@ class CCA(Method):
             Z = self.representations_d[other_network]
             align = torch.abs(torch.mm(H.t(), Z))
             a = torch.sum(align, dim=1, keepdim=False)
-            self.pw_alignments[other_network][network] = a.cpu().numpy()
-            self.pw_corrs[other_network][network] = (s*a).cpu().numpy()
+            self.pw_alignments[other_network][network] = a
+            self.pw_corrs[other_network][network] = s*a
             self.pw_similarities[other_network][network] = (torch.sum(s*a)/torch.sum(a)).item()
 
     def write_correlations(self, output_file):
