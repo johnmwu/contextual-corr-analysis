@@ -862,3 +862,16 @@ Okee, let's continue
   Submitted batch job 32140
 - [X] Create analysis13 nb?
 
+
+* DONE For RBFCKA, compute some statistics
+  CLOSED: [2019-08-14 Wed 14:07]
+  CLOCK: [2019-08-14 Wed 13:48]--[2019-08-14 Wed 14:07] =>  0:19
+  :PROPERTIES:
+  :ARCHIVE_TIME: 2019-08-14 Wed 14:07
+  :ARCHIVE_FILE: ~/core/mind/sys/short/proc/main.org
+  :ARCHIVE_OLPATH: yonatan/contextual-corr-analysis
+  :ARCHIVE_CATEGORY: main
+  :ARCHIVE_TODO: DONE
+  :END:
+
+  
