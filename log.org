@@ -875,3 +875,45 @@ Okee, let's continue
   :END:
 
   
+
+* DONE Commit and push the images? That would help others that aren't here. 
+  CLOSED: [2019-08-14 Wed 14:38]
+  CLOCK: [2019-08-14 Wed 14:07]--[2019-08-14 Wed 14:38] =>  0:31
+  :PROPERTIES:
+  :ARCHIVE_TIME: 2019-08-14 Wed 14:38
+  :ARCHIVE_FILE: ~/core/mind/sys/short/proc/main.org
+  :ARCHIVE_OLPATH: yonatan/contextual-corr-analysis
+  :ARCHIVE_CATEGORY: main
+  :ARCHIVE_TODO: DONE
+  :END:
+
+* WAIT [#A] Regen CCA for everything that needs it.
+    CLOCK: [2019-08-14 Wed 16:27]--[2019-08-14 Wed 16:29] =>  0:02
+    CLOCK: [2019-08-14 Wed 16:26]--[2019-08-14 Wed 16:27] =>  0:01
+    CLOCK: [2019-08-14 Wed 13:11]--[2019-08-14 Wed 13:23] =>  0:12
+    CLOCK: [2019-08-13 Tue 14:00]--[2019-08-13 Tue 14:05] =>  0:05
+  :PROPERTIES:
+  :ARCHIVE_TIME: 2019-08-14 Wed 16:29
+  :ARCHIVE_FILE: ~/core/mind/sys/short/proc/main.org
+  :ARCHIVE_OLPATH: yonatan/contextual-corr-analysis
+  :ARCHIVE_CATEGORY: main
+  :ARCHIVE_TODO: WAIT
+  :END:
+Subsumed into another task
+
+Waiting on 30749 and 30750
+
+I guess this would be results 1 and 8
+
+Oh... fuck me. Somehow, things are tensors again in CCA. I can't have
+this. FUCK. Need to change CCA to save things as numpy arrays. Then run
+again for 1 and 8.
+
+Converting from torch tensor to np array: what ways are there to do
+this? How about np.asarray or something? Maybe that's safer? Ahh,
+whatever. We're sure we're using torch anyway.
+
+Submitted batch job 46440
+Submitted batch job 46441
+
+Then we need to regen analysis-8. 
