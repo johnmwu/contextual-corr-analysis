@@ -754,3 +754,62 @@ Shit... this may actually be coded wrong. Ahhhhhhh shit.
 Okay, well would it be good now? What is taking up memory? Yeah, should
 be good now. If I give 240GB, it should be all g. 
 
+
+* DONE [#A] Evidence that RBFCKA is stable under different sizes of the dataset
+    CLOSED: [2019-08-14 Wed 11:25]
+    CLOCK: [2019-08-09 Fri 16:02]--[2019-08-09 Fri 17:20] =>  1:18
+  :PROPERTIES:
+  :ARCHIVE_TIME: 2019-08-14 Wed 11:25
+  :ARCHIVE_FILE: ~/core/mind/sys/short/proc/main.org
+  :ARCHIVE_OLPATH: yonatan/contextual-corr-analysis
+  :ARCHIVE_CATEGORY: main
+  :ARCHIVE_TODO: DONE
+  :END:
+- [X] How exactly would I get such evidence?
+  
+  My code currently supports taking the first k words of the corpus. I
+  could run this with different values of k. However, the initial values
+  would then be overloaded. I don't think this is a huge deal,
+  though. Alternatively, I could take samples of size 10000. 
+  
+  I think what I'll do is just 5000, 10000, 15000, 20000. I don't think
+  the evidence needs to be super statistically motivated; as long as we
+  say we didn't see much of a difference, I think it's ok.
+- [X] Setup everything for running =mk_results12.sh=. 
+  - [X] Create the script, and dependencies
+    - [X] Create mk_results12-helper.sh
+    - [X] 
+  - [X] Alter readme
+- [X] Run mk_results12.sh
+- [X] Get results
+  
+  Waiting on jobs 1098{4..7}
+- [X] Why did it fail? Wait, what? time limit exceeded? Fuck...
+- [X] How many iterations did it get through?
+- [X] Shit.. Actually though, why is it even using dask? 
+  - [X] Before that, change the limit to affect the original tensors
+    being loaded in, NOT just during RBFCKA. 
+    - [X] Remove the limit stuff from RBFCKA
+    - [X] Add limit stuff in loading
+      - [X] I should raise an error in the loading if the results are
+        not all the same shape. Actually, nvm. That can be implemented
+        as a separate function, =check_correct= or something. 
+      - [X] sldkfj
+    - [X] 
+  - [X] I'll test again, we'll see
+    
+    11620       gpu mk_resul  johnmwu  R       0:30      1 sls-sm-6
+    11621       gpu mk_resul  johnmwu  R       0:30      1 sls-sm-3
+    11622       gpu mk_resul  johnmwu  R       0:30      1 sls-sm-3
+    11623       gpu mk_resul  johnmwu  R       0:30      1 sls-titan-10
+  - [X] Try again with some print statements. This is really weird that
+    only 20000 doesn't work.
+    
+    Hmm... idk.. it seems to have taken 5h.
+** DONE Create results12 with different filenames. fuck!
+     CLOSED: [2019-08-14 Wed 10:56]
+     CLOCK: [2019-08-14 Wed 10:54]--[2019-08-14 Wed 10:56] =>  0:02
+Waiting on jobs 3049{2,3,4}     
+** DONE Create an analysis notebook for RBFCKA. 
+   CLOSED: [2019-08-14 Wed 11:25]
+   CLOCK: [2019-08-14 Wed 10:56]--[2019-08-14 Wed 11:25] =>  0:29
