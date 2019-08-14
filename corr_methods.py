@@ -7,19 +7,52 @@ import h5py
 from os.path import basename, dirname
 import dask.array as da
 import pickle
+from var import fname2mname
 
 def load_representations(representation_fname_l, limit=None,
                          layerspec_l=None, first_half_only_l=False,
                          second_half_only_l=False):
-    def fname2mname(fname):
-        """
-        "filename to model name". 
-        """
-        return '-'.join([basename(dirname(fname)), basename(fname)])
+    """
+    Load in representations. Options to control loading exist. 
 
+    Params:
+    ----
+    representation_fname_l : list<str>
+        List of hdf5 files containing representations
+    limit : int or None
+        Limit on number of representations to take
+    layerspec_l : list
+        Specification for each model. May be an integer (layer to take), or
+        "all" or "full". "all" means take all layers. "full" means to
+        concatenate all layers together.
+    first_half_only_l : list<bool>
+        Only take the first half of the representations for a given model. 
+        
+        If given a single value, will be copied into a list of the correct length. 
+    second_half_only_l : list<bool>
+        Only take the second half of the representations for a given model
+
+        If given a single value, will be copied into a list of the correct length. 
+
+    Returns:
+    ----
+    num_neuron_d : {str : int}
+        {network : number of neurons}. Here a network could be a layer, or the stack of all layers, etc. A network is what's being correlated as a single unit. 
+    representations_d : {str : tensor}
+        {network : activations}. 
+    """
+
+    # Edit args
+    if layerspec_l is None:
+        layerspec_l = ['all'] * len(representation_fname_l)
+    if type(first_half_only_l) is not list:
+        first_half_only_l = [first_half_only_l] * len(representation_fname_l)
+    if type(second_half_only_l) is not list :
+        second_half_only_l = [second_half_only_l] * len(representation_fname_l)
+
+    # Main loop
     num_neurons_d = {} 
     representations_d = {} 
-    
     for loop_var in tqdm(zip(representation_fname_l, layerspec_l,
                              first_half_only_l, second_half_only_l)):
         fname, layerspec, first_half_only, second_half_only = loop_var
@@ -84,17 +117,18 @@ def load_representations(representation_fname_l, limit=None,
 
                 representations_l.append(representations)
 
-                # If we've loaded in enough words already, stop
+                # Early stop
                 if limit is not None and word_count >= limit:
                     break
 
-            # update
-            model_name = "{model}_{layer}".format(model=fname2mname(fname), 
+            # Main update
+            network = "{mname}_{layer}".format(mname=fname2mname(fname), 
                                                   layer=layer)
-            num_neurons_d[model_name] = representations_l[0].size()[-1]
-            representations_d[model_name] = torch.cat(representations_l)[:limit]   
+            num_neurons_d[network] = representations_l[0].size()[-1]
+            representations_d[network] = torch.cat(representations_l)[:limit] 
     
     return num_neurons_d, representations_d
+
 
 class Method(object):
     """Abstract representation of a correlation method. 
