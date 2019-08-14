@@ -813,3 +813,52 @@ Waiting on jobs 3049{2,3,4}
 ** DONE Create an analysis notebook for RBFCKA. 
    CLOSED: [2019-08-14 Wed 11:25]
    CLOCK: [2019-08-14 Wed 10:56]--[2019-08-14 Wed 11:25] =>  0:29
+
+* DONE [#A] Correlations of random activations
+    CLOSED: [2019-08-14 Wed 13:42]
+    CLOCK: [2019-08-14 Wed 13:23]--[2019-08-14 Wed 13:42] =>  0:19
+    CLOCK: [2019-08-13 Tue 18:35]--[2019-08-13 Tue 18:43] =>  0:08
+    CLOCK: [2019-08-13 Tue 14:05]--[2019-08-13 Tue 14:21] =>  0:16
+  :PROPERTIES:
+  :ARCHIVE_TIME: 2019-08-14 Wed 13:42
+  :ARCHIVE_FILE: ~/core/mind/sys/short/proc/main.org
+  :ARCHIVE_OLPATH: yonatan/contextual-corr-analysis
+  :ARCHIVE_CATEGORY: main
+  :ARCHIVE_TODO: DONE
+  :END:
+
+- [X] Create script     
+  - [X] Create helper
+    - [X] Create opt13 and repr_files13
+  - [X] 
+- [X] Edit readme
+- [X] Get results
+  
+  Submitted batch job 30751
+  Submitted batch job 30752
+  Submitted batch job 30753
+  Submitted batch job 30754
+  Submitted batch job 30755
+  Submitted batch job 30756
+OK, I can now copy over the analysis nb. Ahh, shit! I fucked it up.
+
+I need to somehow make =representations_d= able to use indices that are
+other than just the basename of the dirname. The simplest solution is
+just to change fname2mname.
+
+Fuck. I'd thought that the structure would be more something like
+=/elmo_rand/ptb_pos_dev.hdf5=
+=/elmo/ptb_pos_dev.hdf5=
+than what it currently is.
+
+Okee, let's continue
+- [X] Get results
+  
+  Submitted batch job 32135
+  Submitted batch job 32136
+  Submitted batch job 32137
+  Submitted batch job 32138
+  Submitted batch job 32139
+  Submitted batch job 32140
+- [X] Create analysis13 nb?
+
