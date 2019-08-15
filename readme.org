@@ -1,8 +1,12 @@
 * intro
-Tools to understand neural representations. 
+Tools to understand neural representations, and application to
+contextualizers.
 
 I'll use org files as the default enhanced text file format. 
 
+This directory, =contextual-corr-analysis=, should be on =sys.path=. It
+will be if you use conda env =jmw0=, which you can find in
+=/usr/users/johnmwu/anaconda3=. 
 * dir
 I try to be very organized. As much as possible, files are organized in
 an if-then-else fashion. What this means is that if directories form a

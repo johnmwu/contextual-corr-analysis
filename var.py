@@ -14,3 +14,28 @@ def fname2mname(fname):
     We take the filename too, because some models have multiple runs in them. 
     """
     return '-'.join([basename(dirname(fname)), basename(fname)])
+
+# The following functions may be reimplemented if desired, particularly if
+# you've changed the formatting
+def network2pair(network):
+    """
+    Takes in a network name, and returns (mname, layer) pair. 
+
+    `layer` could be an int or one of the strings "full", .
+    """
+    i = network.rfind('_')
+    mname = network[:i]
+    layer = network[i+1:]
+    try:
+        layer = int(layer)
+    except:
+        pass
+
+    return mname, layer
+
+def network_sort_key(network):
+    mname, layer = network2pair(network)
+    if layer == "full":
+        layer = 0
+
+    return mname, layer

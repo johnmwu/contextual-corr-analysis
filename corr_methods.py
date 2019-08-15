@@ -22,33 +22,40 @@ def load_representations(representation_fname_l, limit=None,
     limit : int or None
         Limit on number of representations to take
     layerspec_l : list
-        Specification for each model. May be an integer (layer to take), or
-        "all" or "full". "all" means take all layers. "full" means to
+        Specification for each model. May be an integer (layer to take),
+        or "all" or "full". "all" means take all layers. "full" means to
         concatenate all layers together.
     first_half_only_l : list<bool>
-        Only take the first half of the representations for a given model. 
+        Only take the first half of the representations for a given
+        model.
         
-        If given a single value, will be copied into a list of the correct length. 
+        If given a single value, will be copied into a list of the
+        correct length.
     second_half_only_l : list<bool>
-        Only take the second half of the representations for a given model
+        Only take the second half of the representations for a given
+        model. 
 
-        If given a single value, will be copied into a list of the correct length. 
+        If given a single value, will be copied into a list of the
+        correct length.
 
     Returns:
     ----
     num_neuron_d : {str : int}
-        {network : number of neurons}. Here a network could be a layer, or the stack of all layers, etc. A network is what's being correlated as a single unit. 
+        {network : number of neurons}. Here a network could be a layer,
+        or the stack of all layers, etc. A network is what's being
+        correlated as a single unit.
     representations_d : {str : tensor}
         {network : activations}. 
     """
 
     # Edit args
+    l = len(representation_fname_l)
     if layerspec_l is None:
-        layerspec_l = ['all'] * len(representation_fname_l)
+        layerspec_l = ['all'] * l
     if type(first_half_only_l) is not list:
-        first_half_only_l = [first_half_only_l] * len(representation_fname_l)
+        first_half_only_l = [first_half_only_l] * l
     if type(second_half_only_l) is not list :
-        second_half_only_l = [second_half_only_l] * len(representation_fname_l)
+        second_half_only_l = [second_half_only_l] * l
 
     # Main loop
     num_neurons_d = {} 
@@ -103,18 +110,19 @@ def load_representations(representation_fname_l, limit=None,
                         activations = activations.permute(1, 0, 2)
                         activations = activations.contiguous().view(n_word, -1)
                 else:
-                    activations = torch.FloatTensor(activations_h5[sentence_ix][layer] if dim==3 
-                                                        else activations_h5[sentence_ix])
+                    activations = torch.FloatTensor(
+                        activations_h5[sentence_ix][layer] if dim==3 else 
+                        activations_h5[sentence_ix]
+                    )
 
                 # Create `representations`
                 representations = activations
                 if first_half_only: 
-                    representations = torch.chunk(representations, chunks=2,
-                                                  dim=-1)[0]
+                    representations = torch.chunk(
+                        representations, chunks=2, dim=-1)[0]
                 elif second_half_only:
-                    representations = torch.chunk(representations, chunks=2,
-                                                  dim=-1)[1]
-
+                    representations = torch.chunk(
+                        representations, chunks=2, dim=-1)[1]
                 representations_l.append(representations)
 
                 # Early stop
@@ -150,7 +158,8 @@ class Method(object):
 
 
 class MaxMinCorr(Method):
-    def __init__(self, num_neurons_d, representations_d, device, op=None):
+    def __init__(self, num_neurons_d, representations_d, device,
+                 op=None):
         super().__init__(num_neurons_d, representations_d, device)
         self.op = op
 
