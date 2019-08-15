@@ -14,7 +14,7 @@ else:
     device = torch.device('cpu')
 
 
-def get_model_and_tokenizer(model_name):
+def get_model_and_tokenizer(model_name, random_weights=False):
 
     if model_name.startswith('xlnet'):
         model = XLNetModel.from_pretrained(model_name, output_hidden_states=True).to(device)
@@ -31,6 +31,9 @@ def get_model_and_tokenizer(model_name):
     else:
         print('Unrecognized model name:', model_name)
         sys.exit()
+
+    if random_weights:
+        model.apply(model.init_weights)
 
     return model, tokenizer, sep
 
@@ -123,13 +126,22 @@ def run(input_hdf5_filename, model, tokenizer, sep, output_hdf5_filename, model_
 
 
 if __name__ == '__main__':
+    random_weights = False
     if len(sys.argv) == 4:
         model_name = sys.argv[1]
         model, tokenizer, sep = get_model_and_tokenizer(model_name)
         input_hdf5_filename = sys.argv[2]
         output_hdf5_filename = sys.argv[3]
+    elif len(sys.argv) == 5:
+        model_name = sys.argv[1]
+        random_weights = sys.argv[4].lower() == 'random'
+        model, tokenizer, sep = get_model_and_tokenizer(model_name, random_weights=random_weights)
+        
+        input_hdf5_filename = sys.argv[2]
+        output_hdf5_filename = sys.argv[3]
     else:
-        print('USAGE: python ' + sys.argv[0] + ' <model name> <input hdf5 file> <output hdf5 file>')
+        print('USAGE: python ' + sys.argv[0] + ' <model name> <input hdf5 file> <output hdf5 file> [<random weights>]')
+        print('pass <random weights> as "random" to generate representations from randomly initialized models')
 
     run(input_hdf5_filename, model, tokenizer, sep, output_hdf5_filename, model_name)
 
