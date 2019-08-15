@@ -131,7 +131,8 @@ def load_representations(representation_fname_l, limit=None,
 
 
 class Method(object):
-    """Abstract representation of a correlation method. 
+    """
+    Abstract representation of a correlation method. 
 
     Example instances are MaxCorr, MinCorr, MaxLinReg, MinLinReg, CCA,
     LinCKA.
