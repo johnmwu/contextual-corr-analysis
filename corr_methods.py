@@ -105,10 +105,12 @@ def load_representations(representation_fname_l, limit=None,
 
                 # Create `activations`
                 if layer == "full":
-                    activations = torch.FloatTensor(activations_h5[sentence_ix])
+                    activations = torch.FloatTensor(
+                        activations_h5[sentence_ix])
                     if dim == 3:
                         activations = activations.permute(1, 0, 2)
-                        activations = activations.contiguous().view(n_word, -1)
+                        activations = activations.contiguous().view(
+                            n_word, -1)
                 else:
                     activations = torch.FloatTensor(
                         activations_h5[sentence_ix][layer] if dim==3 else 
@@ -393,6 +395,14 @@ class MinLinReg(LinReg):
 
 
 class CCA(Method):
+    """
+    Compute SVCCA and PWCCA. 
+
+    See the papers 
+    - SVCCA: https://arxiv.org/abs/1706.05806
+    - PWCCA: https://arxiv.org/abs/1806.05759
+    """
+
     def __init__(self, num_neurons_d, representations_d, device=None,
                  percent_variance=0.99, normalize_dimensions=True,
                  save_cca_transforms=False):
@@ -425,7 +435,8 @@ class CCA(Method):
             U, S, V = torch.svd(X)
 
             var_sums = torch.cumsum(S.pow(2), 0)
-            wanted_size = torch.sum(var_sums.lt(var_sums[-1] * self.percent_variance)).item()
+            wanted_size = torch.sum(var_sums.lt(var_sums[-1] *
+                                                self.percent_variance)).item()
 
             print('For network', network, 'wanted size is', wanted_size)
 
@@ -444,10 +455,13 @@ class CCA(Method):
         # `self.pw_similarities`: {network: {other: pwcca_similarities}}
         self.transforms = {network: {} for network in self.nrepresentations_d}
         self.corrs = {network: {} for network in self.nrepresentations_d}
-        self.pw_alignments = {network: {} for network in self.nrepresentations_d}
+        self.pw_alignments = {network: {} for network in
+                              self.nrepresentations_d}
         self.pw_corrs = {network: {} for network in self.nrepresentations_d}
-        self.sv_similarities = {network: {} for network in self.nrepresentations_d}
-        self.pw_similarities = {network: {} for network in self.nrepresentations_d}
+        self.sv_similarities = {network: {} for network in
+                                self.nrepresentations_d}
+        self.pw_similarities = {network: {} for network in
+                                self.nrepresentations_d}
         for network, other_network in tqdm(p(self.nrepresentations_d,
                                              self.nrepresentations_d),
                                            desc='cca',
@@ -523,18 +537,20 @@ class CCA(Method):
     def __str__(self):
         return "cca"
 
-# https://arxiv.org/abs/1905.00414
 class LinCKA(Method):
+    """
+    See the paper: https://arxiv.org/abs/1905.00414. 
+
+    This and RBFCKA don't inherit from the same method because there's a
+    trick for LinCKA which speeds up computation. 
+    """
+
     def __init__(self, num_neurons_d, representations_d, device=None,
                  normalize_dimensions=True):
-        # Here, normalize_dimensions means center. TODO: change. 
         super().__init__(num_neurons_d, representations_d, device)
         self.normalize_dimensions = normalize_dimensions
 
     def compute_correlations(self):
-        """
-        Set `self.similarities`. 
-        """
         # Center
         if self.normalize_dimensions:
             for network in tqdm(self.representations_d, desc='mu, sigma'):
@@ -583,6 +599,10 @@ class LinCKA(Method):
         
 
 class RBFCKA(Method):
+    """
+    See the paper: https://arxiv.org/abs/1905.00414
+    """
+
     def __init__(self, num_neurons_d, representations_d, device=None,
                  dask_chunk_size=25_000):
         super().__init__(num_neurons_d, representations_d, device)
@@ -616,7 +636,8 @@ class RBFCKA(Method):
 
         # Set `self.similarities`
         # {network: {other: rbfcka_similarity}}
-        self.similarities = {network: {} for network in self.representations_d}
+        self.similarities = {network: {} for network in
+                             self.representations_d}
         for network, other_network in tqdm(p(self.representations_d,
                                              self.representations_d),
                                            desc='rbfcka',
@@ -669,4 +690,3 @@ class RBFCKA(Method):
 
     def __str__(self):
         return "rbfcka"
-        

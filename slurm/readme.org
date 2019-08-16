@@ -1,4 +1,5 @@
-Each runnable job is named =mk_results*=. The * consists of a number,
+* =mk_results*=
+Most runnable jobs are named =mk_results*=. The * consists of a number,
 followed by some extra stuff. That number is the job number. The
 following meanings are associated with job numbers:
 
