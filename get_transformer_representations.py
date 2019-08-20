@@ -1,5 +1,5 @@
 import torch
-from pytorch_transformers import XLNetTokenizer, XLNetModel, GPT2Tokenizer, GPT2Model, XLMTokenizer, XLMModel
+from pytorch_transformers import XLNetTokenizer, XLNetModel, GPT2Tokenizer, GPT2Model, XLMTokenizer, XLMModel, BertTokenizer, BertModel, RobertaTokenizer, RobertaModel
 
 import h5py
 import json
@@ -28,6 +28,14 @@ def get_model_and_tokenizer(model_name, random_weights=False):
         model = XLMModel.from_pretrained(model_name, output_hidden_states=True).to(device)
         tokenizer = XLMTokenizer.from_pretrained(model_name)
         sep = '</w>'
+    elif model_name.startswith('bert'):
+        model = BertModel.from_pretrained(model_name, output_hidden_states=True).to(device)
+        tokenizer = BertTokenizer.from_pretrained(model_name)
+        sep = '##'
+    elif model_name.startswith('roberta'):
+        model = RobertaModel.from_pretrained(model_name, output_hidden_states=True).to(device)
+        tokenizer = RobertaTokenizer.from_pretrained(model_name)
+        sep = 'Ġ'        
     else:
         print('Unrecognized model name:', model_name)
         sys.exit()
@@ -57,7 +65,7 @@ def get_sentence_repr(sentence, model, tokenizer, sep, model_name):
     assert len(segmented_tokens) == all_hidden_states.shape[1], 'incompatible tokens and states'
     mask = np.full(len(segmented_tokens), False)
 
-    if model_name.startswith('gpt2') or model_name.startswith('xlnet'):
+    if model_name.startswith('gpt2') or model_name.startswith('xlnet') or model_name.startswith('roberta'):
         # if next token is a new word, take current token's representation
         #print(segmented_tokens)
         for i in range(len(segmented_tokens)-1):
@@ -71,6 +79,12 @@ def get_sentence_repr(sentence, model, tokenizer, sep, model_name):
         # if current token is a new word, take it
         for i in range(len(segmented_tokens)):
             if segmented_tokens[i].endswith(sep):
+                mask[i] = True
+        mask[-1] = True
+    elif model_name.startswith('bert'):
+        # if next token is not a continuation, take current token's representation
+        for i in range(len(segmented_tokens)-1):
+            if not segmented_tokens[i+1].startswith(sep):
                 mask[i] = True
         mask[-1] = True
     else:
