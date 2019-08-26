@@ -7,8 +7,9 @@ def get_options(opt_fname):
         layerspec_l = [-1] * len(attention_fname_l)
     else:
         with open(opt_fname, 'r') as f:
-            opt_l = [line.strip().split(',') for line in f]
-            l, f, s = zip(*opt_l)
+            l = [line.strip() for line in f]
+            #opt_l = [line.strip().split(',') for line in f]
+            #l, f, s = zip(*opt_l)
 
             layerspec_l = []
             for ls in l:

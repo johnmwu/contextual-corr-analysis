@@ -17,27 +17,27 @@ else:
 
 
 
-def get_model_and_tokenizer(model_name, random_weights=False):
+def get_model_and_tokenizer(model_name, random_weights=False, do_basic_tokenize=False):
 
     if model_name.startswith('xlnet'):
         model = XLNetModel.from_pretrained(model_name, output_attentions=True).to(device)
-        tokenizer = XLNetTokenizer.from_pretrained(model_name)    
+        tokenizer = XLNetTokenizer.from_pretrained(model_name, do_basic_tokenize=do_basic_tokenize)    
         sep = u'▁'
     elif model_name.startswith('gpt2'):
         model = GPT2Model.from_pretrained(model_name, output_attentions=True).to(device)
-        tokenizer = GPT2Tokenizer.from_pretrained(model_name)
+        tokenizer = GPT2Tokenizer.from_pretrained(model_name, do_basic_tokenize=do_basic_tokenize)
         sep = 'Ġ'
     elif model_name.startswith('xlm'):
         model = XLMModel.from_pretrained(model_name, output_attentions=True).to(device)
-        tokenizer = XLMTokenizer.from_pretrained(model_name)
+        tokenizer = XLMTokenizer.from_pretrained(model_name, do_basic_tokenize=do_basic_tokenize)
         sep = '</w>'
     elif model_name.startswith('bert'):
         model = BertModel.from_pretrained(model_name, output_attentions=True).to(device)
-        tokenizer = BertTokenizer.from_pretrained(model_name)
+        tokenizer = BertTokenizer.from_pretrained(model_name, do_basic_tokenize=do_basic_tokenize)
         sep = '##'
     elif model_name.startswith('roberta'):
         model = RobertaModel.from_pretrained(model_name, output_attentions=True).to(device)
-        tokenizer = RobertaTokenizer.from_pretrained(model_name)
+        tokenizer = RobertaTokenizer.from_pretrained(model_name, do_basic_tokenize=do_basic_tokenize)
         sep = 'Ġ'        
     else:
         print('Unrecognized model name:', model_name)

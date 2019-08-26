@@ -5,7 +5,7 @@ import json
 import numpy as np
 import h5py
 from os.path import basename, dirname
-import dask.array as da
+#import dask.array as da
 import pickle
 from var import fname2mname
 
@@ -44,7 +44,7 @@ def load_attentions(attention_fname_l, limit=None,
     # Main loop
     num_heads_d = {} 
     attentions_d = {} 
-    for loop_var in tqdm(zip(attention_fname_l, layerspec_l)):
+    for loop_var in tqdm(zip(attention_fname_l, layerspec_l), desc='load'):
         fname, layerspec = loop_var
 
         # Set `attentions_h5`, `sentence_d`, `indices`
@@ -130,8 +130,9 @@ class Method(object):
 
 
 class MaxMinCorr(Method):
-    def __init__(self, num_neurons_d, representations_d, device,
+    def __init__(self, num_heads_d, attentions_d, device,
                  op=None):
+        super().__init__(num_heads_d, attentions_d, device)
         self.op = op
 
     def compute_correlations(self):
@@ -162,22 +163,31 @@ class MaxMinCorr(Method):
             # TODO: make this more efficient? 
             num_heads_network = self.attentions_d[network][0].shape[0]
             num_heads_other_network = self.attentions_d[other_network][0].shape[0]
-            correlation = np.ones((num_sentences, num_heads_network, num_heads_other_network))
+            distances = np.zeros((num_sentences, num_heads_network, num_heads_other_network))
 
             # loop over sentences (may have different lengths)
             for idx, (network_attentions, other_network_attentions) in enumerate(zip(self.attentions_d[network], self.attentions_d[other_network])):
                 for network_head, other_network_head in p(range(len(network_attentions)), range(len(other_network_attentions))):
-
-                    if network_head == other_network_head:
-                        continue
-
                     t1 = network_attentions[network_head].to(device)
                     t2 = other_network_attentions[other_network_head].to(device)
+                    # print(t1); print(t2)
+                    # print(t1 - t2)
+                    # print(torch.norm(t1 - t2, p='fro'))
                     # TODO: consider other norms (perhaps also asymmetric measures?)
-                    distance = torch.norm(t1 - t1, p='fro')
+                    distance = torch.norm(t1 - t2, p='fro')
+                    # print(distance)
                     distance = distance.cpu().numpy().item()
-                    similarity = 1 - distance
-                    correlation[i][network_head][other_network_head] = similarity
+                    # print(distance)
+                    distances[idx][network_head][other_network_head] = distance
+
+            # take mean over sentences
+            distances = distances.mean(axis=0)
+            # print('distances'); print(distances)
+            # TODO: should this happen here or over all networks? 
+            # normalize
+            distances = (distances - distances.min()) / (distances.max() - distances.min())
+            correlation = 1 - distances 
+            # print('correlation'); print(correlation)
 
             self.corrs[network][other_network] = correlation.max(axis=1)
             self.corrs[other_network][network] = correlation.max(axis=0)
@@ -188,11 +198,20 @@ class MaxMinCorr(Method):
             self.pairs[network][other_network] = correlation.argmax(axis=1)
             self.pairs[other_network][network] = correlation.argmax(axis=0)
 
+        # print('self.attentions_d'); print(self.attentions_d)
+        # print('self.num_heads_d'); print(self.num_heads_d)
+        # print('self.corrs'); print(self.corrs)
+        # print('self.similarities'); print(self.similarities)
+        # print('self.pairs'); print(self.pairs)
+
         # Set `self.head_sort` : {network, sorted_list}
         # Set `self.head_notated_sort` : {network: [(head, {other: (corr, pair)})]}
         self.head_sort = {} 
         self.head_notated_sort = {}
         for network in tqdm(self.attentions_d, desc='annotation'):
+            # print('network'); print(network)
+            # print('self.corrs[network]')
+            # print(self.corrs[network])
             self.head_sort[network] = sorted(
                 range(self.num_heads_d[network]), 
                 key=lambda i: self.op(
@@ -213,6 +232,8 @@ class MaxMinCorr(Method):
                 ) 
                 for head in self.head_sort[network]
             ]
+        # print('head_sort'); print(self.head_sort)
+        # print('head_notated_sort'); print(self.head_notated_sort)
 
     def write_correlations(self, output_file):
         output = {
