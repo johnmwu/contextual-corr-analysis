@@ -15,8 +15,6 @@ def get_options(opt_fname):
             for ls in l:
                 if ls == "all":
                     layerspec_l.append(ls)
-                elif ls == "full":
-                    layerspec_l.append(ls)
                 else:
                     layerspec_l.append(int(ls))
 

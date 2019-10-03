@@ -1382,3 +1382,29 @@ Maybe I can find the paper I read that talked about it?
 I guess I roughly already did this..
 
 I sent an email to Yonatan with my idea about this. 
+
+* DONE Localized vs distributed stuff
+    CLOSED: [2019-10-03 Thu 10:56]
+    CLOCK: [2019-10-03 Thu 10:23]--[2019-10-03 Thu 10:56] =>  0:33
+  :PROPERTIES:
+  :ARCHIVE_TIME: 2019-10-03 Thu 10:56
+  :ARCHIVE_FILE: ~/core/mind/sys/short/proc/main.org
+  :ARCHIVE_OLPATH: yonatan/proj
+  :ARCHIVE_CATEGORY: main
+  :ARCHIVE_TODO: DONE
+  :END:
+Okay, so I've done some of it. 
+
+The conclusions seems to be that the lower layers are more
+distributed. I'm not sure what to think of this. It could be that this
+really is the case, or it could be that our measurements are not correct
+proxies for this information. 
+
+* TODO MDS visualizations?
+  :PROPERTIES:
+  :ARCHIVE_TIME: 2019-10-03 Thu 10:57
+  :ARCHIVE_FILE: ~/core/mind/sys/short/proc/main.org
+  :ARCHIVE_OLPATH: yonatan/proj
+  :ARCHIVE_CATEGORY: main
+  :ARCHIVE_TODO: TODO
+  :END:

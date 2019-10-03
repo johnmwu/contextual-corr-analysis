@@ -9,8 +9,7 @@ from os.path import basename, dirname
 import pickle
 from var import fname2mname
 
-def load_attentions(attention_fname_l, limit=None,
-                         layerspec_l=None):
+def load_attentions(attention_fname_l, limit=None, layerspec_l=None):
     """
     Load in attentions. Options to control loading exist. 
 
@@ -22,8 +21,7 @@ def load_attentions(attention_fname_l, limit=None,
         Limit on number of attentions to take
     layerspec_l : list
         Specification for each model. May be an integer (layer to take),
-        or "all" or "full". "all" means take all layers. "full" means to
-        concatenate all layers together.
+        or "all". "all" means take all layers. 
 
     Returns:
     ----
@@ -62,8 +60,6 @@ def load_attentions(attention_fname_l, limit=None,
         num_heads = s[1]
         if layerspec == "all":
             layers = list(range(num_layers))
-        elif layerspec == "full":
-            layers = ["full"]
         else:
             layers = [layerspec]
 
@@ -84,15 +80,8 @@ def load_attentions(attention_fname_l, limit=None,
                 word_count += n_word
 
                 # Create `attentions`
-                if layer == "full":
-                    attentions = torch.FloatTensor(
-                        attentions_h5[sentence_ix])
-                    attentions = attentions.contiguous().view(
-                    	-1, n_word, n_word)
-                else:
-                    attentions = torch.FloatTensor(
-                        attentions_h5[sentence_ix][layer]
-                    )
+                attentions = torch.FloatTensor(
+                    attentions_h5[sentence_ix][layer] )
 
                 # Update `attentions_l`
                 attentions_l.append(attentions)
