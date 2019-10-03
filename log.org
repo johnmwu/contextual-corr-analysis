@@ -938,3 +938,447 @@ Submitted batch job 46449
 Redo mincorr
 Submitted batch job 46545
 
+
+* DONE [#A] Ask Jim whether there's anything he wants me to do.
+  CLOSED: [2019-08-16 Fri 14:57]
+  :PROPERTIES:
+  :ARCHIVE_TIME: 2019-08-16 Fri 14:57
+  :ARCHIVE_FILE: ~/core/mind/sys/short/proc/main.org
+  :ARCHIVE_OLPATH: yonatan/contextual-corr-analysis
+  :ARCHIVE_CATEGORY: main
+  :ARCHIVE_TODO: DONE
+  :END:
+
+* DONE [#A] Writeup of what we've been doing, send to Jim
+    CLOSED: [2019-08-16 Fri 16:01]
+    CLOCK: [2019-08-16 Fri 15:25]--[2019-08-16 Fri 16:01] =>  0:36
+  :PROPERTIES:
+  :ARCHIVE_TIME: 2019-08-16 Fri 16:01
+  :ARCHIVE_FILE: ~/core/mind/sys/short/proc/main.org
+  :ARCHIVE_OLPATH: yonatan/contextual-corr-analysis
+  :ARCHIVE_CATEGORY: main
+  :ARCHIVE_TODO: DONE
+  :END:
+I guess I'll just do this in plain text?
+
+I can include it as an update?
+
+* TODO [#A] Email Yonatan about what time he wants to regroup
+  :PROPERTIES:
+  :ARCHIVE_TIME: 2019-09-19 Thu 17:19
+  :ARCHIVE_FILE: ~/core/mind/sys/short/proc/main.org
+  :ARCHIVE_OLPATH: yonatan
+  :ARCHIVE_CATEGORY: main
+  :ARCHIVE_TODO: TODO
+  :END:
+
+* DONE attn analysis
+  CLOSED: [2019-09-24 Tue 11:38]
+  CLOCK: [2019-09-24 Tue 11:11]--[2019-09-24 Tue 11:36] =>  0:25
+  :PROPERTIES:
+  :ARCHIVE_TIME: 2019-09-24 Tue 11:39
+  :ARCHIVE_FILE: ~/core/mind/sys/short/proc/main.org
+  :ARCHIVE_OLPATH: yonatan
+  :ARCHIVE_CATEGORY: main
+  :ARCHIVE_TODO: DONE
+  :END:
+
+* WAIT [#A] Add the more models suggested by yonatan.
+  CLOCK: [2019-08-07 Wed 16:02]--[2019-08-07 Wed 16:35] =>  0:33
+  CLOCK: [2019-08-07 Wed 13:50]--[2019-08-07 Wed 14:14] =>  0:24
+  :PROPERTIES:
+  :ARCHIVE_TIME: 2019-09-24 Tue 11:39
+  :ARCHIVE_FILE: ~/core/mind/sys/short/proc/main.org
+  :ARCHIVE_OLPATH: yonatan/contextual-corr-analysis
+  :ARCHIVE_CATEGORY: main
+  :ARCHIVE_TODO: WAIT
+  :END:
+** DONE Optimize linreg; svds only need to be computed once
+     CLOSED: [2019-08-07 Wed 17:12]
+- [X] Update the hnb to accurately reflect stuff     
+- [X] Install the line profiler and see how much time the SVD takes
+  compared to other things
+- [X] Add line_profiler into anki
+- [X] Make edits in hnb
+- [X] Add changes to =corr_methods.py=.
+** DONE Create tester scripts for each of the methods
+   CLOSED: [2019-08-07 Wed 17:12]
+** DONE Get tester scripts to run successfully
+     CLOSED: [2019-08-07 Wed 18:10]
+     CLOCK: [2019-08-07 Wed 17:19]--[2019-08-07 Wed 18:10] =>  0:51
+     CLOCK: [2019-08-07 Wed 17:15]--[2019-08-07 Wed 17:18] =>  0:03
+- [X] Run      
+- [X] Can I load these files into Jupyter?
+- [X] Try recreating analysis-8 as a test analysis nb
+  - [X] Where should I put this analysis nb?
+  - [X] 
+** DONE Create new script
+   CLOSED: [2019-08-07 Wed 18:54]
+   CLOCK: [2019-08-07 Wed 18:10]--[2019-08-07 Wed 18:54] =>  0:44
+** DONE Get results
+   CLOSED: [2019-08-08 Thu 12:21]
+** DONE Look at errors. Some errors may be due to memory; should try and fix these.
+     CLOSED: [2019-08-13 Tue 13:59]
+
+It seems that CCA and Linreg are running out of memory, regardless.
+** WAIT Somehow, the shapes are wrong
+
+* TODO Document, readme, finish up analyis
+    CLOCK: [2019-08-16 Fri 11:05]--[2019-08-16 Fri 11:40] =>  0:35
+    CLOCK: [2019-08-15 Thu 12:14]--[2019-08-15 Thu 14:19] =>  2:05
+    CLOCK: [2019-08-14 Wed 18:56]--[2019-08-14 Wed 18:56] =>  0:00
+    CLOCK: [2019-08-14 Wed 16:56]--[2019-08-14 Wed 17:46] =>  0:50
+  :PROPERTIES:
+  :ARCHIVE_TIME: 2019-09-24 Tue 11:39
+  :ARCHIVE_FILE: ~/core/mind/sys/short/proc/main.org
+  :ARCHIVE_OLPATH: yonatan/contextual-corr-analysis
+  :ARCHIVE_CATEGORY: main
+  :ARCHIVE_TODO: TODO
+  :END:
+- [X] Create a module =var.py= which houses functions which will need to
+  be reimplemented by each user. 
+- [X] Change first_half_only_l etc to be False by default, and allow
+  these values in the function.
+  - [X] Change hnb
+  - [X] 
+- [X] Is there a way to import the =var.py= file from my ju notebooks?
+  
+  Maybe I can have my environment automatically have the project as part
+  of its path?
+- [X] Define a network_sort_key function
+- [X] regen analysis-13
+- [X] I should write small docstrings for each Method
+  object. Unfortunately, I'm not sure whether to put this under the
+  Method object, or the __init__ function.
+Okay, I'm pretty much done =corr_methods=.
+
+- [X] Copy improvements in analysis-8 over to the test analysis nb. 
+- [X] Answer Yonatan's requests
+  - [X] sldkjf
+- [ ] 
+
+* TODO Have a look at yonatan's code in the repo
+  :PROPERTIES:
+  :ARCHIVE_TIME: 2019-09-24 Tue 11:39
+  :ARCHIVE_FILE: ~/core/mind/sys/short/proc/main.org
+  :ARCHIVE_OLPATH: yonatan/contextual-corr-analysis
+  :ARCHIVE_CATEGORY: main
+  :ARCHIVE_TODO: TODO
+  :END:
+
+* TODO Dynamic loading of tensors
+    CLOCK: [2019-08-13 Tue 17:24]--[2019-08-13 Tue 17:48] =>  0:24
+    CLOCK: [2019-08-13 Tue 16:36]--[2019-08-13 Tue 16:38] =>  0:02
+     CLOCK: [2019-08-07 Wed 14:14]--[2019-08-07 Wed 16:02] =>  1:48
+  :PROPERTIES:
+  :ARCHIVE_TIME: 2019-09-24 Tue 11:40
+  :ARCHIVE_FILE: ~/core/mind/sys/short/proc/main.org
+  :ARCHIVE_OLPATH: yonatan/contextual-corr-analysis
+  :ARCHIVE_CATEGORY: main
+  :ARCHIVE_TODO: TODO
+  :END:
+This is annoying because it isn't testable through Jupyter. Wait. IS
+it? Also, this might be method-specific.
+
+Wait. I think my computer should support cuda9.. let's try installing pt
+with cuda9 and seeing what happens.
+
+It seems we need an older version of PyTorch. Ahh... didn't work.
+
+Hmmm... maybe we try to do it on the GPU, and if it fails, then we
+switch that iteration to the cpu. I think this is probably the cleanest.
+** TODO What is the error that you get when the GPU memory runs out?
+I can create a test?     
+** TODO Create a gpu-memlimit option, that is passed to the method constructor.
+** TODO Create a use_gpu function that somehow decides whether to use the gpu, given a bunch of information (for example, maybe just pass in the tensors directly)
+
+* TODO Implement a correctness check (for shapes) before everything else
+  :PROPERTIES:
+  :ARCHIVE_TIME: 2019-09-24 Tue 11:40
+  :ARCHIVE_FILE: ~/core/mind/sys/short/proc/main.org
+  :ARCHIVE_OLPATH: yonatan/contextual-corr-analysis
+  :ARCHIVE_CATEGORY: main
+  :ARCHIVE_TODO: TODO
+  :END:
+
+* TODO I need to understand: how many params are in a transformer?
+  :PROPERTIES:
+  :ARCHIVE_TIME: 2019-09-24 Tue 11:40
+  :ARCHIVE_FILE: ~/core/mind/sys/short/proc/main.org
+  :ARCHIVE_OLPATH: yonatan/contextual-corr-analysis
+  :ARCHIVE_CATEGORY: main
+  :ARCHIVE_TODO: TODO
+  :END:
+
+* TODO Significance testing -- add some random noise
+  :PROPERTIES:
+  :ARCHIVE_TIME: 2019-09-24 Tue 11:41
+  :ARCHIVE_FILE: ~/core/mind/sys/short/proc/main.org
+  :ARCHIVE_OLPATH: yonatan/contextual-corr-analysis
+  :ARCHIVE_CATEGORY: main
+  :ARCHIVE_TODO: TODO
+  :END:
+
+* TODO Experiment with dask array, see if you can do anything with it. (w)
+  :PROPERTIES:
+  :ARCHIVE_TIME: 2019-09-24 Tue 11:41
+  :ARCHIVE_FILE: ~/core/mind/sys/short/proc/main.org
+  :ARCHIVE_OLPATH: yonatan/contextual-corr-analysis
+  :ARCHIVE_CATEGORY: main
+  :ARCHIVE_TODO: TODO
+  :END:
+** DONE Read some extra stuff about it
+** DONE Create some testing section in my filesystem for it
+** DONE Test some stuff
+*** DONE Wow. Duck typing is beautiful.. I should write something
+     about it..
+*** DONE Add functionality to use dask in RBFCKA
+**** DONE Copy past compute_correlations over
+**** DONE Add dask_chunk_size capability in all scripts
+***** DONE RBFCKA constructor
+** DONE Alter scripts to be able to use dask arrays for RBF CKA.
+*** DONE Add a dask chunk size flag nvm.
+*** DONE Make scripts able to take in the limit
+** TODO Try running it
+*** DONE Create mk_results10-1.sh
+*** DONE Determine if it actually uses the max number of cores it can
+*** DONE Run
+*** DONE Recv results
+*** DONE Hmm.. maybe I need to be clearer on how to instantiate the
+     client..
+     
+     Yes. I think so.
+*** TODO Solve the following error
+     
+     OSError: [Errno 122] Disk quota exceeded: '/data/sls/u/urop/johnmwu/contextual-corr-analysis/slurm/dask-worker-space/worker-v9w3_pmk/storage/%28%27exp-2798cd0f343803b1a5311840159953ce%27%2C%201%2C%201%29'
+     
+     [[https://stackoverflow.com/q/40042748/4019495][this]] SO question seems to be related. I'm not sure if its the
+     same error. Well, it's not, but perhaps changing my temporary
+     directory will do something.
+     
+     I can try what this recommends
+     
+     task
+**** DONE Fill in temporary_directory entry in yaml file
+***** DONE What is a yaml file?
+**** DONE Install pyyaml?
+**** DONE Run again
+**** DONE Receive results, hopefully if error it's a diff one. 
+       
+       Nope, again got an error...
+       
+       OSError: [Errno 122] Disk quota exceeded mk_results10-1.sh: line 7: 194830 Killed                  python ../main.py "${repr_files}" "${results}" --opt_fname "${opt_fname}" --methods rbfcka
+**** TODO
+
+* TODO Create LaTeX document with mathematical derivations
+  :PROPERTIES:
+  :ARCHIVE_TIME: 2019-09-24 Tue 11:41
+  :ARCHIVE_FILE: ~/core/mind/sys/short/proc/main.org
+  :ARCHIVE_OLPATH: yonatan/contextual-corr-analysis
+  :ARCHIVE_CATEGORY: main
+  :ARCHIVE_TODO: TODO
+  :END:
+ 
+ ideas
+** Equivalence of our centering (in LinCKA) with theirs
+
+* TODO Spearman significance testing
+  :PROPERTIES:
+  :ARCHIVE_TIME: 2019-09-24 Tue 11:41
+  :ARCHIVE_FILE: ~/core/mind/sys/short/proc/main.org
+  :ARCHIVE_OLPATH: yonatan/contextual-corr-analysis
+  :ARCHIVE_CATEGORY: main
+  :ARCHIVE_TODO: TODO
+  :END:
+
+* Visualizations: cmaps, more sentences, more neurons
+    CLOCK: [2019-08-08 Thu 14:41]--[2019-08-08 Thu 17:24] =>  2:43
+  :PROPERTIES:
+  :ARCHIVE_TIME: 2019-09-24 Tue 11:41
+  :ARCHIVE_FILE: ~/core/mind/sys/short/proc/main.org
+  :ARCHIVE_OLPATH: yonatan/contextual-corr-analysis
+  :ARCHIVE_CATEGORY: main
+  :END:
+- [X] Regen everything in results-1    
+  - [X] Rewrite =mk_results1.sh=. I guess it should be an sbatch script
+    instead?
+  - [X] Run it
+  - [X] Get results
+  - [X] 
+- [X] Rewrite vis notebook to reflect new data format
+
+* TODO Write unit tests, test the code
+  :PROPERTIES:
+  :ARCHIVE_TIME: 2019-09-24 Tue 11:41
+  :ARCHIVE_FILE: ~/core/mind/sys/short/proc/main.org
+  :ARCHIVE_OLPATH: yonatan/contextual-corr-analysis
+  :ARCHIVE_CATEGORY: main
+  :ARCHIVE_TODO: TODO
+  :END:
+** TODO How do unit tests work in Python?
+*** DONE What is the build passing thing you see on github?
+     This is related to the notion of "Continuous Delivery". It is an
+     interesting concept.
+*** TODO
+** TODO Write some tests
+*** TODO TestMethods
+*** TODO TestLoading
+*** TODO TestWriting
+
+* TODO [#B] Cleanup directory
+  :PROPERTIES:
+  :ARCHIVE_TIME: 2019-09-24 Tue 11:41
+  :ARCHIVE_FILE: ~/core/mind/sys/short/proc/main.org
+  :ARCHIVE_OLPATH: yonatan/contextual-corr-analysis
+  :ARCHIVE_CATEGORY: main
+  :ARCHIVE_TODO: TODO
+  :END:
+
+* TODO Write new proposal
+  :PROPERTIES:
+  :ARCHIVE_TIME: 2019-09-24 Tue 11:41
+  :ARCHIVE_FILE: ~/core/mind/sys/short/proc/main.org
+  :ARCHIVE_OLPATH: yonatan/contextual-corr-analysis
+  :ARCHIVE_CATEGORY: main
+  :ARCHIVE_TODO: TODO
+  :END:
+What are attention heads doing?    
+
+* TODO Update =load_representations= to not be specific to this project
+  :PROPERTIES:
+  :ARCHIVE_TIME: 2019-09-24 Tue 11:41
+  :ARCHIVE_FILE: ~/core/mind/sys/short/proc/main.org
+  :ARCHIVE_OLPATH: yonatan/contextual-corr-analysis
+  :ARCHIVE_CATEGORY: main
+  :ARCHIVE_TODO: TODO
+  :END:
+For example, "sentence_to_index" is a bit too specific..
+
+* contextual-corr-analysis
+  CLOCK: [2019-08-05 Mon 11:13]--[2019-08-05 Mon 14:05] =>  2:52
+  :PROPERTIES:
+  :ARCHIVE_TIME: 2019-09-24 Tue 11:41
+  :ARCHIVE_FILE: ~/core/mind/sys/short/proc/main.org
+  :ARCHIVE_OLPATH: yonatan
+  :ARCHIVE_CATEGORY: main
+  :END:
+
+* DONE Look at Yonatan's implementations of the attention corrs
+  CLOSED: [2019-09-24 Tue 11:52]
+  CLOCK: [2019-09-20 Fri 19:23]--[2019-09-20 Fri 19:36] =>  0:13
+  CLOCK: [2019-09-19 Thu 16:23]--[2019-09-19 Thu 17:52] =>  1:29
+  CLOCK: [2019-09-13 Fri 20:51]--[2019-09-13 Fri 21:29] =>  0:38
+  CLOCK: [2019-09-13 Fri 19:53]--[2019-09-13 Fri 19:58] =>  0:05
+  :PROPERTIES:
+  :ARCHIVE_TIME: 2019-09-24 Tue 11:52
+  :ARCHIVE_FILE: ~/core/mind/sys/short/proc/main.org
+  :ARCHIVE_OLPATH: yonatan
+  :ARCHIVE_CATEGORY: main
+  :ARCHIVE_TODO: DONE
+  :END:
+** DONE What do the attn files contain?
+    CLOSED: [2019-09-19 Thu 17:52]
+- [X] where do I put this?
+- [X] What is the other 12 dimension in bert_base? I'm guessing it's the
+  number of attn heads?
+
+  I think it's the number of attn heads. Can I find evid of this in the
+  bert paper? Ahh, yes. 
+- [X] What is the order of these? Is the first index the layer or the
+  the index of the attn head?
+
+  Actually, how would you even tell? Lol, just look at one where they're
+  not equal.
+- [X] What is the structure of the =n_word= \times =n_word= matrix?
+
+  For instance, is it a stochastic matrix? Yes. So, this is Q^T K.
+** TODO What attention corr methods has yonatan implemented?
+    CLOCK: [2019-09-19 Thu 17:52]--[2019-09-19 Thu 18:04] =>  0:12
+OK, so =attentions_l= is a list of num_heads x n_word x n_word tensors.
+
+Wait, the mean frobenius norm isn't fair. Longer sentences will have a
+smaller frobenius norm difference. Maybe I can propose a better
+approach. 
+
+The key question is: given two sequences of matrices, how what is the
+"similarity" between those two sequences?
+
+How would we evaluate a measure of attention similarity? Actually, we
+can use the same thing CKA did---how well the similarity index can
+predict. If M1, M2 are two of the same model trained from different
+initializations, the first transformer head layer in M1 should be most
+similar to the first transformer head layer in M2. 
+
+Another thing we could think about is what the transformation measure
+should be invariant under, and what it shouldn't.
+
+Unfortunately, we don't have a big representation matrix to think
+about. We can't take something like that and look at its eigvals or
+something.
+*** should be invariant
+- swapping of attn heads. Actually, this might be about it. 
+** misc
+At some point, I said something like: 
+
+#+BEGIN_QUOTE
+Maybe we can do something like maxmincorr
+#+END_QUOTE
+
+What did I mean by this?
+
+Previously, we were looking at layers of neurons. Now, we're looking at
+layers of attn heads.
+
+Do each of the methods make sense to transfer to attn?
+- maxmincorr
+
+  Yes, if we have a way to correlate two attn heads. In fact, it works
+  the exact same way.
+- linreg
+
+  I don't think this makes sense. Here, we're fundamentally looking at
+  linear combinations of attn heads. However, the attn heads are always
+  separate. The first place where you can take linear combinations is
+  when they factor into neuron activations again; if you're just looking
+  at alignment matrices this makes no sense at all.
+- svcca
+
+  Again, subspace doesn't seem to make much sense.
+- cka
+
+  What is your kernel matrix? Again, I'm not too sure about this one.
+
+* DONE Organize task list for project
+   CLOSED: [2019-09-24 Tue 11:56]
+   CLOCK: [2019-09-24 Tue 11:42]--[2019-09-24 Tue 11:56] =>  0:14
+  :PROPERTIES:
+  :ARCHIVE_TIME: 2019-09-24 Tue 11:56
+  :ARCHIVE_FILE: ~/core/mind/sys/short/proc/main.org
+  :ARCHIVE_OLPATH: yonatan
+  :ARCHIVE_CATEGORY: main
+  :ARCHIVE_TODO: DONE
+  :END:
+What separations do I want to make?
+- tasks vs things to learn
+
+  within this, tasks yonatan specifically mentions vs tasks I want to
+  do.
+- 
+
+* DONE Formalize notion of distributed vs localized
+    CLOSED: [2019-10-03 Thu 10:23]
+  :PROPERTIES:
+  :ARCHIVE_TIME: 2019-10-03 Thu 10:23
+  :ARCHIVE_FILE: ~/core/mind/sys/short/proc/main.org
+  :ARCHIVE_OLPATH: yonatan/proj
+  :ARCHIVE_CATEGORY: main
+  :ARCHIVE_TODO: DONE
+  :END:
+Shit.. searching for "distributed vs localized" online doesn't result in
+anything.
+
+Maybe I can find the paper I read that talked about it?
+
+I guess I roughly already did this..
+
+I sent an email to Yonatan with my idea about this. 

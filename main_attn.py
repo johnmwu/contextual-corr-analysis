@@ -24,8 +24,9 @@ def get_options(opt_fname):
 
 def get_method_l(methods, num_heads_d, attentions_d, device):
     if 'all' in methods:
-        method_l = [ MaxCorr(num_heads_d, attentions_d, device),
-                     MinCorr(num_heads_d, attentions_d, device)
+        method_l = [
+            MaxCorr(num_heads_d, attentions_d, device),
+            MinCorr(num_heads_d, attentions_d, device),
         ]
     else:
         method_l = []
@@ -56,7 +57,7 @@ def main(methods, attention_files, output_file, opt_fname=None,
     # Load
     print("Loading attentions")
     a = load_attentions(attention_fname_l, limit=limit,
-                             layerspec_l=layerspec_l)
+                        layerspec_l=layerspec_l)
     num_heads_d, attentions_d = a
     
     # Set `method_l`, list of Method objects

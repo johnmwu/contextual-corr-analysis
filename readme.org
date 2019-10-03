@@ -16,7 +16,8 @@ representations. This means the representations depend on context. Thus,
 it isn't a map from words to vectors, but rather a map from sentence,
 position pairs to vectors. 
 
-We are studying these representations. Some models we are studying are
+We are studying these representations. We've also developed some generic
+tools to do so. Some models we are studying are
 - ELMo
 - BERT
 - XLnet
@@ -45,7 +46,7 @@ The main script to call is =main.py=. Simplified, its calling format is
 ~main.py [--methods [METHODS ...]] REPRESENTATION_FILES OUTPUT_FILE~
 
 For specific examples, see the scripts in =slurm=. To see all options,
-try ~main.py --help~.
+try ~python main.py --help~.
 * workflow
 Our pipeline is:
 1. Generate representations, which are assumed to be hdf5
@@ -59,7 +60,8 @@ Our pipeline is:
 New correlation methods should extend =Method=, found in =corr_methods=.
 
 The =var= python module contains things you have a reasonable chance of
-wanting to modify.
+wanting to modify. If you want to use this, you'll probably want to have
+a look there.
 * dir
 I try to be very organized. As much as possible, files are organized in
 an if-then-else fashion. What this means is that if directories form a
@@ -102,3 +104,7 @@ SLURM scripts, as well as additional files to aid the scripts.
 Executable scripts here are typically run directly as ~SCRIPTNAME~. The
 scripts run in this way are executable files; nonexecutable files are
 generally helpers.
+* glossary
+TO DO. I've been reasonably consistent with my usage of certain vague
+terms like "network", "model", etc. It'd be good to formalize these for
+this project.

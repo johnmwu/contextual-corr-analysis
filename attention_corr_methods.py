@@ -140,12 +140,10 @@ class MaxMinCorr(Method):
         # Set `self.pairs` : {network: {other: [pair]}}
         # pair is index of head in other network
         # Set `self.similarities` : {network: {other: sim}}
-        self.corrs = {network: {} for network in
-                             self.attentions_d}
-        self.pairs = {network: {} for network in
-                             self.attentions_d}
+        self.corrs = {network: {} for network in self.attentions_d}
+        self.pairs = {network: {} for network in self.attentions_d}
         self.similarities = {network: {} for network in
-                         self.attentions_d}
+                             self.attentions_d}
         # TODO: remove 
         num_sentences = len(next(iter(self.attentions_d.values())))
         for network, other_network in tqdm(p(self.attentions_d,
@@ -161,6 +159,7 @@ class MaxMinCorr(Method):
             device = self.device
 
             # TODO: make this more efficient? 
+            # Set `distances`
             num_heads_network = self.attentions_d[network][0].shape[0]
             num_heads_other_network = self.attentions_d[other_network][0].shape[0]
             distances = np.zeros((num_sentences, num_heads_network, num_heads_other_network))

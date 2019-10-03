@@ -1,4 +1,4 @@
-* Question
+* question
 - [X] In the =sentence_d= variable, why are they (sentence, string
   index) pairs by default? 
   
@@ -83,7 +83,7 @@
 - [ ] When scheduling SLURM jobs, how to specify that a GPU should be used?
   Will PyTorch tensor operations automatically use the GPU if one is available?
   If not, then should I add this default to the code?
-* Misc
+* misc
 - Allocation of 32 cores on a 630 machine
   
   Mon Jul 22 19:02:11 EDT 2019
@@ -263,7 +263,7 @@
   - CoNLL-2003 shared task
   - SNLI
   - GloVe
-* Progress update
+* progress update
 ** Fri Jun 14 14:53:49 EDT 2019
 In emacs org-mode, there should be a way to set it up so that when tasks are
 completed, they are automatically appended to some file. I have yet to set this
@@ -304,7 +304,59 @@ notebooks). Please have a brief glance.
 
 Please let me know what you want me to do next. Should I now attempt to run the
 code on the files you gave me? How should I go about doing this?
-* Goal
+** Fri Aug 16 15:12:47 EDT 2019
+Note: this is identical to the report given to Jim, with headings
+suitably indented.
+*** progress
+The project may be found in
+=/usr/users/johnmwu/contextual-corr-analysis=. Dumps of computations are
+found in =/data/sls/temp/johnmwu/contextual-corr-analysis=, but they
+aren't so important.
+
+The =analysis= directory is the most interesting. If you'd like to run
+the notebooks, use my conda environment at
+=/usr/users/johnmwu/anaconda3=.
+
+Please refer to the project readme for more details. 
+
+We've done a few things so far:
+**** representational similarity
+This is answering the question: how similar are two layers?
+
+The literature proposes multiple methods
+- [[https://arxiv.org/abs/1706.05806][SVCCA]]
+- [[https://arxiv.org/abs/1806.05759][PWCCA]]
+- [[https://arxiv.org/abs/1905.00414][CKA]] (which admits various kernels)
+  
+The implementations of these are scattered and don't take advantage of
+gpu computations. We implement each of these, and others, under a
+unified module. 
+
+These methods ultimately compute similarities based on a layer's
+"activation matrix", a c by n matrix, where c is the number of examples,
+and n is the number of neurons.
+
+An example heatmap can be found in =analysis/analysis-8=. If you run the
+notebook, there are actually more than just the one saved in the output. 
+**** neuron sorts
+For each layer, we sort for important and/or interpretable neurons. This
+exists in the same interface as our representations.
+
+We haven't done too much analysis on the results, as it's difficult to
+say what the analysis means
+**** visualizations
+We've done some visualizations of top neurons found through the neuron
+sorts.
+
+See =vis-1.ipynb=.
+*** plans
+The next major todo is to look at transformer heads.
+
+The goal of the project is to better understand these recent embedding
+models. This is vague, but a more specific one is the better understand
+the Transformer---particularly, why it has taken off so well in NLP.
+
+* goal
 Not sure. 
 
 Written Fri Jun 28 17:05:08 EDT 2019
