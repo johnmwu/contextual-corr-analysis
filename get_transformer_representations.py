@@ -1,5 +1,5 @@
 import torch
-from pytorch_transformers import XLNetTokenizer, XLNetModel, GPT2Tokenizer, GPT2Model, XLMTokenizer, XLMModel, BertTokenizer, BertModel, RobertaTokenizer, RobertaModel
+from transformers import XLNetTokenizer, XLNetModel, GPT2Tokenizer, GPT2Model, XLMTokenizer, XLMModel, BertTokenizer, BertModel, RobertaTokenizer, RobertaModel
 
 import h5py
 import json
