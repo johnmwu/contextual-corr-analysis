@@ -125,16 +125,17 @@ class MaxMinCorr(Method):
         self.op = op
 
     def compute_correlations(self):
+        # convenient variables
+        device = self.device
+        num_sentences = len(next(iter(self.attentions_d.values())))
+
         # Set `self.corrs` : {network: {other: [corr]}}
         # Set `self.pairs` : {network: {other: [pair]}}
         # pair is index of head in other network
         # Set `self.similarities` : {network: {other: sim}}
         self.corrs = {network: {} for network in self.attentions_d}
         self.pairs = {network: {} for network in self.attentions_d}
-        self.similarities = {network: {} for network in
-                             self.attentions_d}
-        # TODO: remove 
-        num_sentences = len(next(iter(self.attentions_d.values())))
+        self.similarities = {network: {} for network in self.attentions_d}
         for network, other_network in tqdm(p(self.attentions_d,
                                              self.attentions_d),
                                              desc='correlate',
@@ -145,38 +146,26 @@ class MaxMinCorr(Method):
             if other_network in self.corrs[network]: 
                 continue
 
-            device = self.device
-
-            # TODO: make this more efficient? 
             # Set `distances`
-            num_heads_network = self.attentions_d[network][0].shape[0]
-            num_heads_other_network = self.attentions_d[other_network][0].shape[0]
-            distances = np.zeros((num_sentences, num_heads_network, num_heads_other_network))
+            distances = np.zeros((num_sentences, self.num_heads_d[network], self.num_heads_d[other_network]))
+            for idx, (attns, o_attns) in enumerate(zip(self.attentions_d[network], self.attentions_d[other_network])):
+                t1 = attns.to(device)
+                t2 = o_attns.to(device)
+                t11, t12, t13 = t1.size()
+                t21, t22, t23 = t2.size()
+                t1 = t1.reshape(t11, 1, t12, t13)
+                t2 = t2.reshape(1, t21, t22, t23)
 
-            # loop over sentences (may have different lengths)
-            for idx, (network_attentions, other_network_attentions) in enumerate(zip(self.attentions_d[network], self.attentions_d[other_network])):
-                for network_head, other_network_head in p(range(len(network_attentions)), range(len(other_network_attentions))):
-                    t1 = network_attentions[network_head].to(device)
-                    t2 = other_network_attentions[other_network_head].to(device)
-                    # print(t1); print(t2)
-                    # print(t1 - t2)
-                    # print(torch.norm(t1 - t2, p='fro'))
-                    # TODO: consider other norms (perhaps also asymmetric measures?)
-                    distance = torch.norm(t1 - t2, p='fro')
-                    # print(distance)
-                    distance = distance.cpu().numpy().item()
-                    # print(distance)
-                    distances[idx][network_head][other_network_head] = distance
+                distance = torch.norm(t1-t2, p='fro', dim=(2,3))
+                distances[idx] = distance.cpu().numpy()
 
-            # take mean over sentences
+            # Set `correlation`
             distances = distances.mean(axis=0)
-            # print('distances'); print(distances)
-            # TODO: should this happen here or over all networks? 
-            # normalize
-            distances = (distances - distances.min()) / (distances.max() - distances.min())
-            correlation = 1 - distances 
-            # print('correlation'); print(correlation)
+            mi, ma = distances.min(), distances.max()
+            distances = (distances-mi)/(ma-mi)
+            correlation = 1 - distances
 
+            # Main update
             self.corrs[network][other_network] = correlation.max(axis=1)
             self.corrs[other_network][network] = correlation.max(axis=0)
 
@@ -186,20 +175,11 @@ class MaxMinCorr(Method):
             self.pairs[network][other_network] = correlation.argmax(axis=1)
             self.pairs[other_network][network] = correlation.argmax(axis=0)
 
-        # print('self.attentions_d'); print(self.attentions_d)
-        # print('self.num_heads_d'); print(self.num_heads_d)
-        # print('self.corrs'); print(self.corrs)
-        # print('self.similarities'); print(self.similarities)
-        # print('self.pairs'); print(self.pairs)
-
         # Set `self.head_sort` : {network, sorted_list}
         # Set `self.head_notated_sort` : {network: [(head, {other: (corr, pair)})]}
         self.head_sort = {} 
         self.head_notated_sort = {}
         for network in tqdm(self.attentions_d, desc='annotation'):
-            # print('network'); print(network)
-            # print('self.corrs[network]')
-            # print(self.corrs[network])
             self.head_sort[network] = sorted(
                 range(self.num_heads_d[network]), 
                 key=lambda i: self.op(
@@ -220,8 +200,6 @@ class MaxMinCorr(Method):
                 ) 
                 for head in self.head_sort[network]
             ]
-        # print('head_sort'); print(self.head_sort)
-        # print('head_notated_sort'); print(self.head_notated_sort)
 
     def write_correlations(self, output_file):
         output = {
