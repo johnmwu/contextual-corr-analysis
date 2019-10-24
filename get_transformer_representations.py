@@ -6,31 +6,34 @@ import json
 import numpy as np
 from tqdm import tqdm
 import sys
-
-disable_cuda = False
-if not disable_cuda and torch.cuda.is_available():
-    device = torch.device('cuda')
-else:
-    device = torch.device('cpu')
+import argparse 
 
 
-def get_model_and_tokenizer(model_name, random_weights=False):
+def get_model_and_tokenizer(model_name, random_weights=False, model_path=None):
+    """
+    model_path: if given, initialize from path instead of official repo
+    """
+
+    init_model = model_name
+    if model_path:
+        print('Initializing model from local path:', model_path)
+        init_model = model_path
 
     if model_name.startswith('xlnet'):
-        model = XLNetModel.from_pretrained(model_name, output_hidden_states=True).to(device)
-        tokenizer = XLNetTokenizer.from_pretrained(model_name)    
+        model = XLNetModel.from_pretrained(init_model, output_hidden_states=True).to(device)
+        tokenizer = XLNetTokenizer.from_pretrained(init_model)
         sep = u'▁'
     elif model_name.startswith('gpt2'):
-        model = GPT2Model.from_pretrained(model_name, output_hidden_states=True).to(device)
-        tokenizer = GPT2Tokenizer.from_pretrained(model_name)
+        model = GPT2Model.from_pretrained(init_model, output_hidden_states=True).to(device)
+        tokenizer = GPT2Tokenizer.from_pretrained(init_model)
         sep = 'Ġ'
     elif model_name.startswith('xlm'):
-        model = XLMModel.from_pretrained(model_name, output_hidden_states=True).to(device)
-        tokenizer = XLMTokenizer.from_pretrained(model_name)
+        model = XLMModel.from_pretrained(init_model, output_hidden_states=True).to(device)
+        tokenizer = XLMTokenizer.from_pretrained(init_model)
         sep = '</w>'
     elif model_name.startswith('bert'):
-        model = BertModel.from_pretrained(model_name, output_hidden_states=True).to(device)
-        tokenizer = BertTokenizer.from_pretrained(model_name)
+        model = BertModel.from_pretrained(init_model, output_hidden_states=True).to(device)
+        tokenizer = BertTokenizer.from_pretrained(init_model)
         sep = '##'
     elif model_name.startswith('roberta'):
         model = RobertaModel.from_pretrained(model_name, output_hidden_states=True).to(device)
@@ -41,6 +44,7 @@ def get_model_and_tokenizer(model_name, random_weights=False):
         sys.exit()
 
     if random_weights:
+        print('Randomizing weights')
         model.apply(model.init_weights)
 
     return model, tokenizer, sep
@@ -140,27 +144,24 @@ def run(input_hdf5_filename, model, tokenizer, sep, output_hdf5_filename, model_
 
 
 if __name__ == '__main__':
-    random_weights = False
-    if len(sys.argv) == 4:
-        model_name = sys.argv[1]
-        model, tokenizer, sep = get_model_and_tokenizer(model_name)
-        input_hdf5_filename = sys.argv[2]
-        output_hdf5_filename = sys.argv[3]
-    elif len(sys.argv) == 5:
-        model_name = sys.argv[1]
-        random_weights = sys.argv[4].lower() == 'random'
-        model, tokenizer, sep = get_model_and_tokenizer(model_name, random_weights=random_weights)
-        
-        input_hdf5_filename = sys.argv[2]
-        output_hdf5_filename = sys.argv[3]
+    parser = argparse.ArgumentParser()
+    parser.add_argument("model_name")
+    parser.add_argument("input_hdf5_file")
+    parser.add_argument("output_hdf5_file")
+    parser.add_argument("--random_weights", action="store_true", help="generate representations from randomly initialized model")
+    parser.add_argument("--model_path", help="Local path to load model from", default=None)
+    parser.add_argument("--disable_cuda", action="store_true")
+    args = parser.parse_args()
+    print(args)
+
+    if not args.disable_cuda and torch.cuda.is_available():
+        device = torch.device('cuda')
     else:
-        print('USAGE: python ' + sys.argv[0] + ' <model name> <input hdf5 file> <output hdf5 file> [<random weights>]')
-        print('pass <random weights> as "random" to generate representations from randomly initialized models')
-
-    run(input_hdf5_filename, model, tokenizer, sep, output_hdf5_filename, model_name)
+        device = torch.device('cpu')
 
 
+    model, tokenizer, sep = get_model_and_tokenizer(args.model_name, random_weights=args.random_weights, model_path=args.model_path)
+    run(args.input_hdf5_file, model, tokenizer, sep, args.output_hdf5_file, args.model_name)
 
-#input_hdf5_filename = '/data/sls/temp/belinkov/contextual-corr-analysis/contextualizers/elmo_original/ptb_pos_dev.hdf5'
-#output_filename = '/data/sls/temp/belinkov/contextual-corr-analysis/contextualizers/xlnet_large_cased/ptb_pos_dev.hdf5'
+
 
