@@ -98,6 +98,8 @@ Temporary files needed by hnb's are also here.
 ** tests
 Testing correctness of code for bugs. Includes slurm scripts, notebooks
 that load in generated results (to see if the generated results work). 
+
+Also tests speed. 
 ** slurm
 SLURM scripts, as well as additional files to aid the scripts. 
 
