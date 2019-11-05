@@ -1,0 +1,4 @@
+- 1: original loop implementation of correlations
+- 2: no loop implementation of correlations. To compare to 1 for
+  performance.
+- 3: testing pearson correlation

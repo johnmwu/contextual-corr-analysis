@@ -1,6 +1,7 @@
 import torch
 import argparse
-from attention_corr_methods import (load_attentions, MaxCorr, MinCorr)
+from attention_corr_methods import (load_attentions, MaxCorr, MinCorr,
+                                    PearsonMaxCorr, PearsonMinCorr)
 
 def get_options(opt_fname):
     if opt_fname == None:
@@ -25,6 +26,8 @@ def get_method_l(methods, num_heads_d, attentions_d, device):
         method_l = [
             MaxCorr(num_heads_d, attentions_d, device),
             MinCorr(num_heads_d, attentions_d, device),
+            PearsonMaxCorr(num_heads_d, attentions_d, device),
+            PearsonMinCorr(num_heads_d, attentions_d, device),
         ]
     else:
         method_l = []
@@ -33,6 +36,12 @@ def get_method_l(methods, num_heads_d, attentions_d, device):
                 method_l.append(MaxCorr(num_heads_d, attentions_d, device))
             elif method == 'mincorr':
                 method_l.append(MinCorr(num_heads_d, attentions_d, device))
+            elif method == 'pearsonmaxcorr':
+                method_l.append(PearsonMaxCorr(num_heads_d,
+                                               attentions_d, device))
+            elif method == 'pearsonmincorr':
+                method_l.append(PearsonMinCorr(num_heads_d,
+                                               attentions_d, device))
 
     return method_l
 
@@ -60,8 +69,7 @@ def main(methods, attention_files, output_file, opt_fname=None,
     
     # Set `method_l`, list of Method objects
     print('\nInitializing methods ' + str(methods))
-    method_l = get_method_l(methods, num_heads_d, attentions_d,
-                            device)
+    method_l = get_method_l(methods, num_heads_d, attentions_d, device)
 
     # Run all methods in method_l
     print('\nComputing correlations')

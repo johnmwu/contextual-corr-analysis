@@ -130,6 +130,8 @@ class MaxMinCorr(Method):
         # convenient variables
         device = self.device
         self.num_sentences = len(next(iter(self.attentions_d.values())))
+        self.num_words = sum(t.size()[-1] for t in
+                             next(iter(self.attentions_d.values())))
 
         # Set `self.corrs` : {network: {other: [corr]}}
         # Set `self.pairs` : {network: {other: [pair]}}
@@ -252,6 +254,54 @@ class MinCorr(FroMaxMinCorr):
     def __str__(self):
         return "mincorr"
 
+
+class PearsonMaxMinCorr(MaxMinCorr):
+    """
+    A MaxMinCorr method based on taking Pearson correlations. 
+    """
+    def correlation_matrix(self, network, other_network):
+        device = self.device
+        num_sentences = self.num_sentences
+
+        # set `total_corrs`
+        total_corrs = np.zeros((num_sentences, self.num_heads_d[network],
+                                self.num_heads_d[other_network]))
+        for idx, (attns, o_attns) in enumerate(
+                zip(self.attentions_d[network],
+                    self.attentions_d[other_network])):
+            t1 = attns.to(device)
+            t2 = o_attns.to(device)
+            t11, t12, t13 = t1.size()
+            t21, t22, t23 = t2.size()
+            t1 = t1.reshape(t11, 1, t12, t13)
+            t2 = t2.reshape(1, t21, t22, t23)
+
+            if t12 < 2: # t12 = sentence length
+                continue
+
+            cov = (t1*t2).mean(dim=-1) - t1.mean(dim=-1)*t2.mean(dim=-1)
+            corr = cov/(torch.std(t1, dim=-1)*torch.std(t2, dim=-1))
+            total_corrs[idx] = corr.sum(dim=-1).cpu().numpy()
+
+        # set `correlation`
+        correlation = total_corrs.sum(axis=0)/self.num_words
+        return correlation
+
+
+class PearsonMaxCorr(PearsonMaxMinCorr):
+    def __init__(self, num_heads_d, attentions_d, device):
+        super().__init__(num_heads_d, attentions_d, device, op=max)
+
+    def __str__(self):
+        return "pearsonmaxcorr"
+
+
+class PearsonMinCorr(PearsonMaxMinCorr):
+    def __init__(self, num_heads_d, attentions_d, device):
+        super().__init__(num_heads_d, attentions_d, device, op=min)
+
+    def __str__(self):
+        return "pearsonmincorr"
 
 
 
