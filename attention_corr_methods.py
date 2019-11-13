@@ -325,11 +325,16 @@ class JSMaxMinCorr(MaxMinCorr):
             t1 = t1.reshape(t11, 1, t12, t13)
             t2 = t2.reshape(1, t21, t22, t23)
 
+            # set `kl1`, `kl2`
             m = (t1+t2)/2
-            kl1 = torch.sum(t1*(torch.log(t1) - torch.log(m)), dim=-1) # D_KL(t1 || m)
-            kl2 = torch.sum(t2*(torch.log(t2) - torch.log(m)), dim=-1) # D_KL(t2 || m)
+            kl1s = t1*(torch.log(t1) - torch.log(m))
+            kl1s[torch.isnan(kl1s)] = 0 
+            kl1 = torch.sum(kl1s, dim=-1) 
+            kl2s = t2*(torch.log(t2) - torch.log(m))
+            kl2s[torch.isnan(kl2s)] = 0 
+            kl2 = torch.sum(kl2s, dim=-1) 
 
-            js = (kl1 + kl2)/2 # avg seems to increase slightly with sent len
+            js = (kl1 + kl2)/2 
             total_dist[idx] = js.sum(dim=-1).cpu().numpy()
 
         # set `correlation`
