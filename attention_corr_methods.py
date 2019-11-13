@@ -304,6 +304,52 @@ class PearsonMinCorr(PearsonMaxMinCorr):
         return "pearsonmincorr"
 
 
+class JSMaxMinCorr(MaxMinCorr):
+    """
+    A MaxMinCorr method based on Jensen-Shannon divergence. 
+    """
+    def correlation_matrix(self, network, other_network):
+        device = self.device
+        num_sentences = self.num_sentences
+
+        # set `total_corrs`
+        total_dist = np.zeros((num_sentences, self.num_heads_d[network],
+                                      self.num_heads_d[other_network]))
+        for idx, (attns, o_attns) in enumerate(
+                zip(self.attentions_d[network],
+                    self.attentions_d[other_network])):
+            t1 = attns.to(device)
+            t2 = o_attns.to(device)
+            t11, t12, t13 = t1.size()
+            t21, t22, t23 = t2.size()
+            t1 = t1.reshape(t11, 1, t12, t13)
+            t2 = t2.reshape(1, t21, t22, t23)
+
+            m = (t1+t2)/2
+            kl1 = torch.sum(t1*(torch.log(t1) - torch.log(m)), dim=-1) # D_KL(t1 || m)
+            kl2 = torch.sum(t2*(torch.log(t2) - torch.log(m)), dim=-1) # D_KL(t2 || m)
+
+            js = (kl1 + kl2)/2 # avg seems to increase slightly with sent len
+            total_dist[idx] = js.sum(dim=-1).cpu().numpy()
+
+        # set `correlation`
+        correlation = 1 - total_dist.sum(axis=0)/self.num_words
+        return correlation
+
+
+class JSMaxCorr(JSMaxMinCorr):
+    def __init__(self, num_heads_d, attentions_d, device):
+        super().__init__(num_heads_d, attentions_d, device, op=max)
+
+    def __str__(self):
+        return "jsmaxcorr"
+
+class JSMinCorr(JSMaxMinCorr):
+    def __init__(self, num_heads_d, attentions_d, device):
+        super().__init__(num_heads_d, attentions_d, device, op=min)
+
+    def __str__(self):
+        return "jsmincorr"
 
 # TODO: probably remove all this
 class LinReg(Method): 
