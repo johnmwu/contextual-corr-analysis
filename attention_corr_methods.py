@@ -239,8 +239,6 @@ class FroMaxMinCorr(MaxMinCorr):
 
         # Set `correlation`
         distances = distances.mean(axis=0)
-        mi, ma = distances.min(), distances.max()
-        distances = (distances-mi)/(ma-mi)
         correlation = 1 - distances
 
         return correlation
