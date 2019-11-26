@@ -1,0 +1,8 @@
+/data/sls/temp/belinkov/contextual-corr-analysis/contextualizers/gpt2_small/ptb_pos_dev_rand_include_embeddings.hdf5
+/data/sls/temp/belinkov/contextual-corr-analysis/contextualizers/gpt2_small/ptb_pos_dev_include_embeddings.hdf5
+/data/sls/temp/belinkov/contextual-corr-analysis/contextualizers/xlnet_large_cased/ptb_pos_dev_rand_include_embeddings.hdf5
+/data/sls/temp/belinkov/contextual-corr-analysis/contextualizers/xlnet_large_cased/ptb_pos_dev_include_embeddings.hdf5
+/data/sls/temp/belinkov/contextual-corr-analysis/contextualizers/gpt2_medium/ptb_pos_dev_include_embeddings.hdf5
+/data/sls/temp/belinkov/contextual-corr-analysis/contextualizers/gpt2_medium/ptb_pos_dev_rand_include_embeddings.hdf5
+/data/sls/temp/belinkov/contextual-corr-analysis/contextualizers/xlnet_base_cased/ptb_pos_dev_include_embeddings.hdf5
+/data/sls/temp/belinkov/contextual-corr-analysis/contextualizers/xlnet_base_cased/ptb_pos_dev_rand_include_embeddings.hdf5
