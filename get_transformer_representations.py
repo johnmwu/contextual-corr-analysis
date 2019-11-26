@@ -1,5 +1,5 @@
 import torch
-from transformers import XLNetTokenizer, XLNetModel, GPT2Tokenizer, GPT2Model, XLMTokenizer, XLMModel, BertTokenizer, BertModel, RobertaTokenizer, RobertaModel
+from transformers import XLNetTokenizer, XLNetModel, GPT2Tokenizer, GPT2Model, XLMTokenizer, XLMModel, BertTokenizer, BertModel, RobertaTokenizer, RobertaModel, DistilBertTokenizer, DistilBertModel
 
 import h5py
 import json
@@ -35,6 +35,10 @@ def get_model_and_tokenizer(model_name, random_weights=False, model_path=None):
         model = BertModel.from_pretrained(init_model, output_hidden_states=True).to(device)
         tokenizer = BertTokenizer.from_pretrained(init_model)
         sep = '##'
+    elif model_name.startswith('distilbert'):
+        model = DistilBertModel.from_pretrained(init_model, output_hidden_states=True).to(device)
+        tokenizer = DistilBertTokenizer.from_pretrained(init_model)
+        sep = '##'    
     elif model_name.startswith('roberta'):
         model = RobertaModel.from_pretrained(model_name, output_hidden_states=True).to(device)
         tokenizer = RobertaTokenizer.from_pretrained(model_name)
@@ -45,12 +49,12 @@ def get_model_and_tokenizer(model_name, random_weights=False, model_path=None):
 
     if random_weights:
         print('Randomizing weights')
-        model.apply(model.init_weights)
+        model.init_weights()
 
     return model, tokenizer, sep
 
 # this follows the HuggingFace API for pytorch-transformers
-def get_sentence_repr(sentence, model, tokenizer, sep, model_name):
+def get_sentence_repr(sentence, model, tokenizer, sep, model_name, include_embeddings=False):
     """
     Get representations for one sentence
     """
@@ -61,7 +65,10 @@ def get_sentence_repr(sentence, model, tokenizer, sep, model_name):
         # Hugging Face format: list of torch.FloatTensor of shape (batch_size, sequence_length, hidden_size) (hidden_states at output of each layer plus initial embedding outputs)
         all_hidden_states = model(input_ids)[-1]
         # convert to format required for contexteval: numpy array of shape (num_layers, sequence_length, representation_dim)
-        all_hidden_states = [hidden_states[0].cpu().numpy() for hidden_states in all_hidden_states[:-1]]
+        if include_embeddings:
+            all_hidden_states = [hidden_states[0].cpu().numpy() for hidden_states in all_hidden_states]
+        else:
+            all_hidden_states = [hidden_states[0].cpu().numpy() for hidden_states in all_hidden_states[:-1]]
         all_hidden_states = np.array(all_hidden_states)
 
     #For each word, take the representation of its last sub-word
@@ -85,7 +92,7 @@ def get_sentence_repr(sentence, model, tokenizer, sep, model_name):
             if segmented_tokens[i].endswith(sep):
                 mask[i] = True
         mask[-1] = True
-    elif model_name.startswith('bert'):
+    elif model_name.startswith('bert') or model_name.startswith('distilbert'):
         # if next token is not a continuation, take current token's representation
         for i in range(len(segmented_tokens)-1):
             if not segmented_tokens[i+1].startswith(sep):
@@ -126,7 +133,7 @@ def make_hdf5_file(sentence_to_index, vectors, output_file_path):
         sentence_index_dataset[0] = json.dumps(sentence_to_index)
 
 
-def run(input_hdf5_filename, model, tokenizer, sep, output_hdf5_filename, model_name):
+def run(input_hdf5_filename, model, tokenizer, sep, output_hdf5_filename, model_name, include_embeddings=False):
 
     print('reading sentences from hdf5')
     hdf5 = h5py.File(input_hdf5_filename)
@@ -136,7 +143,7 @@ def run(input_hdf5_filename, model, tokenizer, sep, output_hdf5_filename, model_
 
     print('getting repreesntations from model')
     for s, idx in tqdm(sentence_to_idx.items(), desc='repr'):
-        hidden_states = get_sentence_repr(s, model, tokenizer, sep, model_name)
+        hidden_states = get_sentence_repr(s, model, tokenizer, sep, model_name, include_embeddings=include_embeddings)
         idx_to_repr[idx] = hidden_states
 
     print('writing representations to new hdf5')
@@ -151,6 +158,7 @@ if __name__ == '__main__':
     parser.add_argument("--random_weights", action="store_true", help="generate representations from randomly initialized model")
     parser.add_argument("--model_path", help="Local path to load model from", default=None)
     parser.add_argument("--disable_cuda", action="store_true")
+    parser.add_argument("--include_embeddings", action="store_true")
     args = parser.parse_args()
     print(args)
 
@@ -161,7 +169,7 @@ if __name__ == '__main__':
 
 
     model, tokenizer, sep = get_model_and_tokenizer(args.model_name, random_weights=args.random_weights, model_path=args.model_path)
-    run(args.input_hdf5_file, model, tokenizer, sep, args.output_hdf5_file, args.model_name)
+    run(args.input_hdf5_file, model, tokenizer, sep, args.output_hdf5_file, args.model_name, include_embeddings=args.include_embeddings)
 
 
 
