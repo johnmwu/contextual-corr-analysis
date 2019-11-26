@@ -24,3 +24,5 @@ following meanings are associated with job numbers:
 11. 
 12. Evidence that RBF is stable under taking a subset of the data. 
 13. {xlnet, gpt2} x {small, big} x {trained, rand}
+14. Rerun of 8 with top layer of xlnet now
+15. Rerun of 13 with top layers
