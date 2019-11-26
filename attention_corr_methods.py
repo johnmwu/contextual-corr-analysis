@@ -9,7 +9,8 @@ from os.path import basename, dirname
 import pickle
 from var import fname2mname
 
-def load_attentions(attention_fname_l, limit=None, layerspec_l=None):
+def load_attentions(attention_fname_l, limit=None, layerspec_l=None,
+                    ar_mask=False):
     """
     Load in attentions. Options to control loading exist. 
 
@@ -22,6 +23,9 @@ def load_attentions(attention_fname_l, limit=None, layerspec_l=None):
     layerspec_l : list
         Specification for each model. May be an integer (layer to take),
         or "all". "all" means take all layers. 
+    ar_mask : bool
+        Whether to mask the future when loading. Some models (eg. gpt)
+        do this automatically.
 
     Returns:
     ----
@@ -33,6 +37,9 @@ def load_attentions(attention_fname_l, limit=None, layerspec_l=None):
         {network : attentions}. attentions is a list because each 
         sentence may be of different length. 
     """
+
+    # to remove
+    print("ar_mask: ", ar_mask)
 
     # Edit args
     l = len(attention_fname_l)
@@ -80,8 +87,14 @@ def load_attentions(attention_fname_l, limit=None, layerspec_l=None):
                 word_count += n_word
 
                 # Create `attentions`
-                attentions = torch.FloatTensor(
-                    attentions_h5[sentence_ix][layer] )
+                if ar_mask:
+                    attentions = np.tril(attentions_h5[sentence_ix][layer])
+                    attentions = attentions/np.sum(attentions, axis=-1,
+                                                   keepdims=True)
+                    attentions = torch.FloatTensor(attentions)
+                else:
+                    attentions = torch.FloatTensor(
+                        attentions_h5[sentence_ix][layer] )
 
                 # Update `attentions_l`
                 attentions_l.append(attentions)

@@ -55,7 +55,7 @@ def get_method_l(methods, num_heads_d, attentions_d, device):
     return method_l
 
 def main(methods, attention_files, output_file, opt_fname=None,
-         limit=None, disable_cuda=False):
+         limit=None, disable_cuda=False, ar_mask=False):
 
     if not disable_cuda and torch.cuda.is_available():
         device = torch.device('cuda')
@@ -73,7 +73,7 @@ def main(methods, attention_files, output_file, opt_fname=None,
     # Load
     print("Loading attentions")
     a = load_attentions(attention_fname_l, limit=limit,
-                        layerspec_l=layerspec_l)
+                        layerspec_l=layerspec_l, ar_mask=ar_mask)
     num_heads_d, attentions_d = a
     
     # Set `method_l`, list of Method objects
@@ -100,10 +100,11 @@ if __name__ == '__main__':
     parser.add_argument("--opt_fname", default=None)
     parser.add_argument("--limit", type=int, default=None)
     parser.add_argument("--disable_cuda", action="store_true")
+    parser.add_argument("--ar_mask", action="store_true") 
 
     args = parser.parse_args()
     main(args.methods, args.attention_files, args.output_file,
          opt_fname=args.opt_fname, limit=args.limit,
-         disable_cuda=args.disable_cuda) 
+         disable_cuda=args.disable_cuda, ar_mask=args.ar_mask) 
 
 
