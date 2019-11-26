@@ -1,0 +1,9 @@
+/data/sls/temp/belinkov/contextual-corr-analysis/contextualizers/bert_base_cased/ptb_pos_dev_attn.hdf5
+/data/sls/temp/belinkov/contextual-corr-analysis/contextualizers/bert_large_cased/ptb_pos_dev_attn.hdf5
+/data/sls/temp/belinkov/contextual-corr-analysis/contextualizers/gpt2_small/ptb_pos_dev_attn.hdf5
+/data/sls/temp/belinkov/contextual-corr-analysis/contextualizers/gpt2_medium/ptb_pos_dev_attn.hdf5
+/data/sls/temp/belinkov/contextual-corr-analysis/contextualizers/xlnet_base_cased/ptb_pos_dev_attn.hdf5
+/data/sls/temp/belinkov/contextual-corr-analysis/contextualizers/xlnet_large_cased/ptb_pos_dev_attn.hdf5
+/data/sls/temp/belinkov/contextual-corr-analysis/contextualizers/roberta_base/ptb_pos_dev_attn.hdf5
+/data/sls/temp/belinkov/contextual-corr-analysis/contextualizers/roberta_large/ptb_pos_dev_attn.hdf5
+/data/sls/temp/belinkov/contextual-corr-analysis/contextualizers/roberta_large_mnli/ptb_pos_dev_attn.hdf5
