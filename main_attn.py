@@ -2,7 +2,8 @@ import torch
 import argparse
 from attention_corr_methods import (load_attentions, MaxCorr, MinCorr,
                                     PearsonMaxCorr, PearsonMinCorr,
-                                    JSMaxCorr, JSMinCorr)
+                                    JSMaxCorr, JSMinCorr, AttnLinCKA,
+                                    AttnCCA)
 
 def get_options(opt_fname):
     if opt_fname == None:
@@ -31,6 +32,8 @@ def get_method_l(methods, num_heads_d, attentions_d, device):
             PearsonMinCorr(num_heads_d, attentions_d, device),
             JSMaxCorr(num_heads_d, attentions_d, device),
             JSMinCorr(num_heads_d, attentions_d, device),
+            AttnLinCKA(num_heads_d, attentions_d, device),
+            AttnCCA(num_heads_d, attentions_d, device),
         ]
     else:
         method_l = []
@@ -50,6 +53,12 @@ def get_method_l(methods, num_heads_d, attentions_d, device):
                                           device))
             elif method == 'jsmincorr':
                 method_l.append(JSMinCorr(num_heads_d, attentions_d,
+                                          device))
+            elif method == 'attn_lincka':
+                method_l.append(AttnLinCKA(num_heads_d, attentions_d,
+                                          device))
+            elif method == 'attn_cca':
+                method_l.append(AttnCCA(num_heads_d, attentions_d,
                                           device))
 
     return method_l

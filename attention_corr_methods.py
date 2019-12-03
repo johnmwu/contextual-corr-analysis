@@ -37,10 +37,6 @@ def load_attentions(attention_fname_l, limit=None, layerspec_l=None,
         {network : attentions}. attentions is a list because each 
         sentence may be of different length. 
     """
-
-    # to remove
-    print("ar_mask: ", ar_mask)
-
     # Edit args
     l = len(attention_fname_l)
     if layerspec_l is None:
@@ -367,139 +363,78 @@ class JSMinCorr(JSMaxMinCorr):
     def __str__(self):
         return "jsmincorr"
 
-# TODO: probably remove all this
-class LinReg(Method): 
-    def __init__(self, num_neurons_d, representations_d, device=None, op=None):
-        super().__init__(num_neurons_d, representations_d, device)
-        self.op = op
 
+class ReprCorr(Method):
+    def __init__(self, num_heads_d, attentions_d, device):
+        super().__init__(num_heads_d, attentions_d, device)
+
+        # set `self.representations_d`
+        self.representations_d = {}
+        for network, al in self.attentions_d.items():
+            fal = [torch.flatten(at, start_dim=1).t() for at in al]
+            self.representations_d[network] = torch.cat(fal)
+
+    
+class AttnLinCKA(ReprCorr):
+    def __init__(self, num_heads_d, attentions_d, device):
+        super().__init__(num_heads_d, attentions_d, device)
+    
     def compute_correlations(self):
-        # Set `means_d`, `stdevs_d`
-        # Set `self.nrepresentations_d` to be normalized. 
-        means_d = {}
-        stdevs_d = {}
-        self.nrepresentations_d = {}
-        self.lsingularv_d = {}
+        # Copied and pasted from `corr_methods.py`. Ideally, we'd share
+        # the code. 
 
-        for network in tqdm(self.representations_d, desc='mu, sigma'):
-            t = self.representations_d[network].to(self.device)
-            means = t.mean(0, keepdim=True)
-            stdevs = (t - means).pow(2).mean(0, keepdim=True).pow(0.5)
-
-            means_d[network] = means.cpu()
-            stdevs_d[network] = stdevs.cpu()
-            self.nrepresentations_d[network] = ((t - means) / stdevs).cpu()
-            self.lsingularv_d[network], _, _ = torch.svd(self.nrepresentations_d[network])
-
-            self.representations_d[network] = None # free up memory
-
-        # Set `self.pred_power`
-        # If the data is centered, it is the r value.
         # Set `self.similarities`
-        self.pred_power = {network: {} for network in self.nrepresentations_d}
-        self.similarities = {network: {} for network in self.nrepresentations_d}        
-        for network, other_network in tqdm(p(self.nrepresentations_d,
-                                             self.nrepresentations_d),
-                                           desc='correlate',
-                                           total=len(self.nrepresentations_d)**2):
+        # {network: {other: lincka_similarity}}
+        self.similarities = {network: {} for network in
+                             self.representations_d}
+        for network, other_network in tqdm(p(self.representations_d,
+                                             self.representations_d),
+                                           desc='lincka',
+                                           total=len(self.representations_d)**2):
 
             if network == other_network:
                 continue
 
-            U = self.lsingularv_d[other_network].to(self.device)
-            Y = self.nrepresentations_d[network].to(self.device)
+            if other_network in self.similarities[network]: 
+                continue
 
-            # SVD method of linreg
-            UtY = torch.mm(U.t(), Y) # b for Ub = Y
+            X = self.representations_d[network].to(self.device)
+            Y = self.representations_d[other_network].to(self.device)
 
-            bnorms = torch.norm(UtY, dim=0)
-            ynorms = torch.norm(Y, dim=0)
+            XtX_F = torch.norm(torch.mm(X.t(), X), p='fro').item()
+            YtY_F = torch.norm(torch.mm(Y.t(), Y), p='fro').item()
+            YtX_F = torch.norm(torch.mm(Y.t(), X), p='fro').item()
 
-            self.pred_power[network][other_network] = (bnorms / ynorms).cpu().numpy()
-            self.similarities[network][other_network] = self.pred_power[network][other_network].mean()
-
-
-        # Set `self.neuron_sort` : {network: sorted_list}
-        # Set `self.neuron_notated_sort` : {network: [(neuron, {other_network: pred_power})]}
-        self.neuron_sort = {}
-        self.neuron_notated_sort = {}
-        # Sort neurons by correlation with another network
-        for network in tqdm(self.nrepresentations_d, desc='annotation'):
-            self.neuron_sort[network] = sorted(
-                    range(self.num_neurons_d[network]),
-                    key = lambda i: self.op(
-                        self.pred_power[network][other][i] 
-                        for other in self.pred_power[network]),
-                    reverse=True
-                )
-
-            self.neuron_notated_sort[network] = [
-                (
-                    neuron,
-                    {
-                        other: float(self.pred_power[network][other][neuron])
-                        for other in self.pred_power[network]
-                    }
-                )
-                for neuron in self.neuron_sort[network]
-            ]
+            # eq 5 in paper
+            sim = YtX_F**2 / (XtX_F*YtY_F)
+            self.similarities[network][other_network] = sim
+            self.similarities[other_network][network] = sim
 
     def write_correlations(self, output_file):
         output = {
-            "pred_power" : self.pred_power,
-            "similarities" : self.similarities,
-            "neuron_sort" : self.neuron_sort,
-            "neuron_notated_sort" : self.neuron_notated_sort,    
+            "similarities": self.similarities,
         }
 
         with open(output_file, "wb") as f:
             pickle.dump(output, f)
 
     def __str__(self):
-        return "linreg"
+        return "attn_lincka"
 
 
-class MaxLinReg(LinReg):
-    def __init__(self, num_neurons_d, representations_d, device=None):
-        super().__init__(num_neurons_d, representations_d, device, op=max)
-
-    def compute_correlations(self):
-        super().compute_correlations()
-
-    def __str__(self):
-        return "maxlinreg"
-    
-
-class MinLinReg(LinReg):
-    def __init__(self, num_neurons_d, representations_d, device=None):
-        super().__init__(num_neurons_d, representations_d, device, op=min)
-
-    def compute_correlations(self):
-        super().compute_correlations()
-
-    def __str__(self):
-        return "minlinreg"
-
-
-class CCA(Method):
-    """
-    Compute SVCCA and PWCCA. 
-
-    See the papers 
-    - SVCCA: https://arxiv.org/abs/1706.05806
-    - PWCCA: https://arxiv.org/abs/1806.05759
-    """
-
-    def __init__(self, num_neurons_d, representations_d, device=None,
+class AttnCCA(ReprCorr):
+    def __init__(self, num_heads_d, attentions_d, device,
                  percent_variance=0.99, normalize_dimensions=True,
                  save_cca_transforms=False):
-        super().__init__(num_neurons_d, representations_d, device)
+        super().__init__(num_heads_d, attentions_d, device)
 
         self.percent_variance = percent_variance
         self.normalize_dimensions = normalize_dimensions
         self.save_cca_transforms = save_cca_transforms
-
+    
     def compute_correlations(self):
+        # Copied from `corr_methods.py`. 
+        
         # Set `self.nrepresentations_d`, "normalized representations".
         # Call it this regardless of if it's actually centered or scaled
         self.nrepresentations_d = {}
@@ -601,6 +536,8 @@ class CCA(Method):
             self.pw_similarities[other_network][network] = (torch.sum(s*a)/torch.sum(a)).item()
 
     def write_correlations(self, output_file):
+        # Copied from `corr_methods.py`. 
+
         if self.save_cca_transforms:
             output = {
                 "transforms": self.transforms,
@@ -622,158 +559,5 @@ class CCA(Method):
             pickle.dump(output, f)
 
     def __str__(self):
-        return "cca"
-
-class LinCKA(Method):
-    """
-    See the paper: https://arxiv.org/abs/1905.00414. 
-
-    This and RBFCKA don't inherit from the same method because there's a
-    trick for LinCKA which speeds up computation. 
-    """
-
-    def __init__(self, num_neurons_d, representations_d, device=None,
-                 normalize_dimensions=True):
-        super().__init__(num_neurons_d, representations_d, device)
-        self.normalize_dimensions = normalize_dimensions
-
-    def compute_correlations(self):
-        # Center
-        if self.normalize_dimensions:
-            for network in tqdm(self.representations_d, desc='mu, sigma'):
-                t = self.representations_d[network]
-                means = t.mean(0, keepdim=True)
-
-                self.representations_d[network] = t - means
-
-        # Set `self.similarities`
-        # {network: {other: lincka_similarity}}
-        self.similarities = {network: {} for network in
-                             self.representations_d}
-        for network, other_network in tqdm(p(self.representations_d,
-                                             self.representations_d),
-                                           desc='lincka',
-                                           total=len(self.representations_d)**2):
-
-            if network == other_network:
-                continue
-
-            if other_network in self.similarities[network]: 
-                continue
-
-            X = self.representations_d[network].to(self.device)
-            Y = self.representations_d[other_network].to(self.device)
-
-            XtX_F = torch.norm(torch.mm(X.t(), X), p='fro').item()
-            YtY_F = torch.norm(torch.mm(Y.t(), Y), p='fro').item()
-            YtX_F = torch.norm(torch.mm(Y.t(), X), p='fro').item()
-
-            # eq 5 in paper
-            sim = YtX_F**2 / (XtX_F*YtY_F)
-            self.similarities[network][other_network] = sim
-            self.similarities[other_network][network] = sim
-
-    def write_correlations(self, output_file):
-        output = {
-            "similarities": self.similarities,
-        }
-
-        with open(output_file, "wb") as f:
-            pickle.dump(output, f)
-
-    def __str__(self):
-        return "lincka"
-        
-
-class RBFCKA(Method):
-    """
-    See the paper: https://arxiv.org/abs/1905.00414
-    """
-
-    def __init__(self, num_neurons_d, representations_d, device=None,
-                 dask_chunk_size=25_000):
-        super().__init__(num_neurons_d, representations_d, device)
-        self.dask_chunk_size = dask_chunk_size
-
-    def compute_correlations(self):
-        def center_gram(G):
-            means = G.mean(0)
-            means -= means.mean() / 2
-            return G - means[None, :] - means[:, None]
-
-        def gram_rbf(X, threshold=1.0):
-            if type(X) == torch.Tensor:
-                dot_products = X @ X.t()
-                sq_norms = dot_products.diag()
-                sq_distances = -2*dot_products + sq_norms[:,None] + sq_norms[None,:]
-                sq_median_distance = sq_distances.median()
-                return torch.exp(-sq_distances / (2*threshold**2 * sq_median_distance))
-            elif type(X) == da.Array:
-                dot_products = X @ X.T
-                sq_norms = da.diag(dot_products)
-                sq_distances = -2*dot_products + sq_norms[:,None] + sq_norms[None,:]
-                sq_median_distance = da.percentile(sq_distances.ravel(), 50)
-                return da.exp((-sq_distances / (2*threshold**2 * sq_median_distance)))
-            else:
-                raise ValueError
-
-        # Set `daskp`
-        daskp = True if self.device == torch.device('cpu') else False
-        print("daskp value: {0}".format(daskp))
-
-        # Set `self.similarities`
-        # {network: {other: rbfcka_similarity}}
-        self.similarities = {network: {} for network in
-                             self.representations_d}
-        for network, other_network in tqdm(p(self.representations_d,
-                                             self.representations_d),
-                                           desc='rbfcka',
-                                           total=len(self.representations_d)**2):
-
-            if network == other_network:
-                continue
-
-            if other_network in self.similarities[network]: 
-                continue
-
-            if daskp:
-                c = self.dask_chunk_size
-                X = da.from_array(np.asarray(self.representations_d[network]), chunks=(c, c))
-                Y = da.from_array(np.asarray(self.representations_d[other_network]), chunks=(c, c))
-
-                Gx = center_gram(gram_rbf(X))
-                Gy = center_gram(gram_rbf(Y))
-
-                scaled_hsic = da.dot(Gx.ravel(), Gy.ravel())
-                norm_gx = da.sqrt(da.dot(Gx.ravel(), Gx.ravel()))
-                norm_gy = da.sqrt(da.dot(Gy.ravel(), Gy.ravel()))
-
-                sim = (scaled_hsic / (norm_gx*norm_gy)).compute()
-            else:
-                device = self.device
-                X = self.representations_d[network].to(device)
-                Y = self.representations_d[other_network].to(device)
-
-                Gx = center_gram(gram_rbf(X))
-                Gy = center_gram(gram_rbf(Y))
-
-                scaled_hsic = torch.dot(Gx.view(-1), Gy.view(-1)).cpu().item()
-                norm_gx = torch.norm(Gx, p="fro").cpu().item()
-                norm_gy = torch.norm(Gy, p="fro").cpu().item()
-
-                sim = scaled_hsic / (norm_gx*norm_gy)
-
-            self.similarities[network][other_network] = sim
-            self.similarities[other_network][network] = sim
-
-
-    def write_correlations(self, output_file):
-        output = {
-            "similarities": self.similarities,
-        }
-
-        with open(output_file, "wb") as f:
-            pickle.dump(output, f)
-
-    def __str__(self):
-        return "rbfcka"
+        return "attn_cca"
+            
