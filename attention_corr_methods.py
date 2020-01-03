@@ -311,6 +311,62 @@ class PearsonMinCorr(PearsonMaxMinCorr):
         return "pearsonmincorr"
 
 
+class PearsonMaxMinCorr2(MaxMinCorr):
+    """
+    A MaxMinCorr method based on taking Pearson correlations. 
+    """
+    def correlation_matrix(self, network, other_network):
+        device = self.device
+        num_sentences = self.num_sentences
+
+        # set `total_corrs`
+        total_corrs = np.zeros((num_sentences, self.num_heads_d[network],
+                                self.num_heads_d[other_network]))
+        for idx, (attns, o_attns) in enumerate(
+                zip(self.attentions_d[network],
+                    self.attentions_d[other_network])):
+            t1 = attns.to(device)
+            t2 = o_attns.to(device)
+            t11, t12, t13 = t1.size()
+            t21, t22, t23 = t2.size()
+            t1 = t1.reshape(t11, 1, t12, t13)
+            t2 = t2.reshape(1, t21, t22, t23)
+
+            # Set `corr`
+            nz = (t1!=0) & (t2!=0) # "nonzero"
+            n = nz.sum(dim=-1).float() # n = length to use
+            x1, x2 = t1.sum(dim=-1), t2.sum(dim=-1)
+            x11, x12, x22 = (t1*t1).sum(dim=-1), (t1*t2).sum(dim=-1), (t2*t2).sum(dim=-1)
+            num = x12-(x1*x2/n)
+            denom = torch.sqrt((x11-(x1*x1/n)) * (x22-(x2*x2/n)))
+            corr = num/denom
+
+            corr = corr.cpu().numpy()
+            corr[~np.isfinite(corr)] = 0
+            total_corrs[idx] = corr.sum(axis=-1)
+
+        # set `correlation`
+        correlation = total_corrs.sum(axis=0)/self.num_words
+        return correlation
+
+
+class PearsonMaxCorr2(PearsonMaxMinCorr2):
+    def __init__(self, num_heads_d, attentions_d, device):
+        super().__init__(num_heads_d, attentions_d, device, op=max)
+
+    def __str__(self):
+        return "pearsonmaxcorr2"
+
+
+class PearsonMinCorr2(PearsonMaxMinCorr2):
+    def __init__(self, num_heads_d, attentions_d, device):
+        super().__init__(num_heads_d, attentions_d, device, op=min)
+
+    def __str__(self):
+        return "pearsonmincorr2"
+
+
+
 class JSMaxMinCorr(MaxMinCorr):
     """
     A MaxMinCorr method based on Jensen-Shannon divergence. 
@@ -372,12 +428,20 @@ class ReprCorr(Method):
         self.representations_d = {}
         for network, al in self.attentions_d.items():
             fal = [torch.flatten(at, start_dim=1).t() for at in al]
-            self.representations_d[network] = torch.cat(fal)
+            t = torch.cat(fal)
+            try:
+                # self.unmask_ix = indices to keep
+                self.representations_d[network] = t[self.unmask_ix, :]
+            except:
+                self.unmask_ix = torch.prod(t!=0, dim=1, dtype=torch.uint8)
+                self.representations_d[network] = t[self.unmask_ix, :]
 
     
 class AttnLinCKA(ReprCorr):
-    def __init__(self, num_heads_d, attentions_d, device):
+    def __init__(self, num_heads_d, attentions_d, device,
+                 normalize_dimensions=True):
         super().__init__(num_heads_d, attentions_d, device)
+        self.normalize_dimensions = normalize_dimensions
     
     def compute_correlations(self):
         # Copied and pasted from `corr_methods.py`. Ideally, we'd share
@@ -385,6 +449,15 @@ class AttnLinCKA(ReprCorr):
 
         # Set `self.similarities`
         # {network: {other: lincka_similarity}}
+
+        # Center
+        if self.normalize_dimensions:
+            for network in tqdm(self.representations_d, desc='mu, sigma'):
+                t = self.representations_d[network]
+                means = t.mean(0, keepdim=True)
+
+                self.representations_d[network] = t - means
+        
         self.similarities = {network: {} for network in
                              self.representations_d}
         for network, other_network in tqdm(p(self.representations_d,

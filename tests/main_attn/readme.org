@@ -3,3 +3,4 @@
   performance.
 - 3: testing pearson correlation
 - 7: testing attnlincka
+- 9: testing pearson corr 2. This updating the ar masking computation. 
