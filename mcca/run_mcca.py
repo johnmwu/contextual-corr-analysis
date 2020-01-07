@@ -7,6 +7,7 @@
 import numpy as np
 #from sklearn.datasets import load_iris, load_digits
 #from sklearn.model_selection import train_test_split
+import matplotlib; matplotlib.use('agg')
 import matplotlib.pyplot as plt
 import seaborn as sns
 import pandas as pd
@@ -26,7 +27,7 @@ import pickle
 
 # In[2]:
 
-
+print('load data', flush=True)
 representations_filename_l = [
 "/data/sls/temp/belinkov/contextual-corr-analysis/contextualizers/bert_large_cased/ptb_pos_dev.hdf5", 
 "/data/sls/temp/belinkov/contextual-corr-analysis/contextualizers/openai_transformer/ptb_pos_dev.hdf5",
@@ -64,9 +65,10 @@ print(representations_a[0].shape)
 
 # In[3]:
 
-
+print('run mcca', flush=True)
 # representations_a = representations_a[59:61]
-representations_a = representations_a[20:30]
+# representations_a = representations_a[:40]
+representations_a = [representations_a[i] for i in range(len(representations_a)) if i % 3 == 0]
 # representations_a = [r[:, :200] for r in representations_a]
 print(len(representations_a))
 print(representations_a[0].shape)
@@ -116,7 +118,7 @@ print(X_PROJ[0].shape); # print(X_PROJ[1].shape); print(X_PROJ[2].shape)
 
 # In[7]:
 
-
+print('run umap', flush=True)
 X_PROJ_flat = np.array([x.real.flatten() for x in X_PROJ])
 print(X_PROJ_flat)
 reducer = umap.UMAP()
@@ -128,9 +130,11 @@ embedding.shape
 
 # In[8]:
 
-
-model_names = [name.split('-')[0] for name in representations_d][20:30]
-layers = [int(name.split('_')[-1]) for name in representations_d][20:30]
+print('plot', flush=True)
+model_names = [name.split('-')[0] for name in representations_d] #[:40]
+layers = [int(name.split('_')[-1]) for name in representations_d] #[:40]
+model_names = [model_names[i] for i in range(len(model_names)) if i % 3 == 0]
+layers = [layers[i] for i in range(len(layers)) if i % 3 == 0]
 model_names_unique = list(set(model_names))
 name_idx_d = dict(zip(model_names_unique, range(len(model_names_unique))))
 model_idx = [name_idx_d[name] for name in model_names]
@@ -154,7 +158,7 @@ plt.savefig('mcca.png')
 
 
 # In[ ]:
-
+print('done')
 
 
 
