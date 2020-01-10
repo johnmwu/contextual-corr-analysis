@@ -21,7 +21,10 @@ sys.path.append('..')
 from corr_methods import load_representations
 from MCCA import MCCA
 import pickle
+import time
 
+
+start_time = time.time()
 
 # # Load data
 
@@ -40,7 +43,7 @@ representations_filename_l = [
 layerspec_l = ["all" for x in representations_filename_l]
 first_half_only_l = [False for x in representations_filename_l]
 second_half_only_l = [False for x in representations_filename_l]
-a = load_representations(representations_filename_l, limit=100, layerspec_l=layerspec_l, 
+a = load_representations(representations_filename_l, limit=10, layerspec_l=layerspec_l, 
                          first_half_only_l=first_half_only_l, second_half_only_l=second_half_only_l)
 num_neurons_d, representations_d = a
 # for name in representations_d:
@@ -52,6 +55,7 @@ representations_a = [representations_d[name] for name in representations_d]
 # print(type(representations_a[0]), flush=True)
 # print(representations_a[0].numpy(), flush=True)
 representations_a = [representations.numpy() for representations in representations_a]
+print(representations_d.keys())
 print(len(representations_a), flush=True)
 print(representations_a[0], flush=True)
 print(representations_a[0].shape)
@@ -68,8 +72,18 @@ print(representations_a[0].shape)
 print('run mcca', flush=True)
 # representations_a = representations_a[59:61]
 # representations_a = representations_a[:40]
-representations_a = [representations_a[i] for i in range(len(representations_a)) if i % 3 == 0]
-# representations_a = [r[:, :200] for r in representations_a]
+to_keep = [0, 1, 11, 12, 23, 24, # bert large
+        24+1, 24+2, 24+6, 24+7, 24+12, 24+13, # gpt1
+        37+1, 37+2, 37+6, 37+7, 37+12, 37+13, # bert base
+        50+1, 50+2, 50+3, # elmo original
+        53+1, 53+2, 53+5, 53+7, # calypso
+        60+1, 60+2, 60+5, # elmo 4x4096
+        65+1, 65+2, 65+12, 65+13, 65+24, 65+25] # xlnet large
+print(to_keep)
+
+#representations_a = [representations_a[i] for i in range(len(representations_a)) if i % 3 == 0]
+representations_a = [representations_a[i] for i in range(len(representations_a)) if i in to_keep]
+representations_a = [r[:, :30] for r in representations_a]
 print(len(representations_a))
 print(representations_a[0].shape)
 print(representations_a[0][:3,:3])
@@ -133,8 +147,12 @@ embedding.shape
 print('plot', flush=True)
 model_names = [name.split('-')[0] for name in representations_d] #[:40]
 layers = [int(name.split('_')[-1]) for name in representations_d] #[:40]
-model_names = [model_names[i] for i in range(len(model_names)) if i % 3 == 0]
-layers = [layers[i] for i in range(len(layers)) if i % 3 == 0]
+#model_names = [model_names[i] for i in range(len(model_names)) if i % 3 == 0]
+#layers = [layers[i] for i in range(len(layers)) if i % 3 == 0]
+model_names = [model_names[i] for i in range(len(model_names)) if i in to_keep]
+layers = [layers[i] for i in range(len(layers)) if i in to_keep]
+print(model_names)
+print(layers)
 model_names_unique = list(set(model_names))
 name_idx_d = dict(zip(model_names_unique, range(len(model_names_unique))))
 model_idx = [name_idx_d[name] for name in model_names]
@@ -152,6 +170,7 @@ scatter = sns.scatterplot(x='x', y='y', hue='model', data=df)
 for i, layer in enumerate(layers):
     scatter.annotate(layer, (embedding[i, 0], embedding[i, 1]))
 #scatter = plt.scatter(embedding[:, 0], embedding[:, 1], c=[sns.color_palette()[x] for x in model_idx])
+plt.legend(framealpha=0.5)
 plt.gca().set_aspect('equal', 'datalim')
 #plt.title('UMAP projection of activations', fontsize=24);
 plt.savefig('mcca.png') 
@@ -159,6 +178,7 @@ plt.savefig('mcca.png')
 
 # In[ ]:
 print('done')
-
+elapsed_time = time.time() - start_time
+print('total time:', time.strftime("%H:%M:%S", time.gmtime(elapsed_time)))
 
 
