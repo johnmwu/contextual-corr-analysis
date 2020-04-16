@@ -1,3 +1,4 @@
+import os
 from os.path import basename, dirname
 
 def fname2mname(fname):
@@ -39,3 +40,7 @@ def network_sort_key(network):
         layer = 0
 
     return mname, layer
+
+PROJECT_ROOT = "/data/sls/u/urop/johnmwu/contextual-corr-analysis"
+if "SLS_ROOT" in os.environ:
+    PROJECT_ROOT = os.environ["SLS_ROOT"] + PROJECT_ROOT
