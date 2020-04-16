@@ -1,0 +1,7 @@
+/data/sls/temp/belinkov/contextual-corr-analysis/contextualizers/bert_large_cased/ewt_pos.hdf5
+/data/sls/temp/belinkov/contextual-corr-analysis/contextualizers/openai_transformer/ewt_pos.hdf5
+/data/sls/temp/belinkov/contextual-corr-analysis/contextualizers/bert_base_cased/ewt_pos.hdf5
+/data/sls/temp/belinkov/contextual-corr-analysis/contextualizers/elmo_original/ewt_pos.hdf5
+/data/sls/temp/belinkov/contextual-corr-analysis/contextualizers/calypso_transformer_6_512_base/ewt_pos.hdf5
+/data/sls/temp/belinkov/contextual-corr-analysis/contextualizers/elmo_4x4096_512/ewt_pos.hdf5
+/data/sls/temp/belinkov/contextual-corr-analysis/contextualizers/xlnet_large_cased/ewt_pos.hdf5

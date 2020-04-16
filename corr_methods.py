@@ -126,8 +126,8 @@ def load_representations(representation_fname_l, limit=None,
                     representations = torch.chunk(
                         representations, chunks=2, dim=-1)[1]
                 representations_l.append(representations)
-                print("{mname}_{layer}".format(mname=fname2mname(fname), layer=layer), 
-                    representations.shape)
+                # print("{mname}_{layer}".format(mname=fname2mname(fname), layer=layer), 
+                #     representations.shape)
 
                 # Early stop
                 if limit is not None and word_count >= limit:
