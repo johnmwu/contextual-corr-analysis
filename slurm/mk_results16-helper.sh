@@ -4,7 +4,7 @@
 #SBATCH --ntasks=1             
 #SBATCH --nodes=1-1            
 #SBATCH --cpus-per-task=4            
-#SBATCH --mem=240GB
+#SBATCH --mem=245GB
 # this is only for cca, others 220GB
 #SBATCH --time=24:00:00         
 

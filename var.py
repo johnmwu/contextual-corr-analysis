@@ -10,7 +10,7 @@ def fname2mname(fname):
         /data/sls/temp/belinkov/contextual-corr-analysis/contextualizers/bert_large_cased/ptb_pos_dev.hdf5
         -> 
         bert_large_cased-ptb_pos_dev.hdf5
-
+ 
     We take the filename too, because some models have multiple runs in them. 
     """
     return '-'.join([basename(dirname(fname)), basename(fname)])
@@ -34,6 +34,9 @@ def network2pair(network):
     return mname, layer
 
 def network_sort_key(network):
+    """
+    So there's a consistent global ordering of our networks. 
+    """
     mname, layer = network2pair(network)
     if layer == "full":
         layer = 0
