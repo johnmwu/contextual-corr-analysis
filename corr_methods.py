@@ -5,7 +5,6 @@ import json
 import numpy as np
 import h5py
 from os.path import basename, dirname
-import dask.array as da
 import pickle
 from var import fname2mname
 
@@ -607,13 +606,14 @@ class RBFCKA(Method):
     """
     See the paper: https://arxiv.org/abs/1905.00414
     """
-
     def __init__(self, num_neurons_d, representations_d, device=None,
                  dask_chunk_size=25_000):
         super().__init__(num_neurons_d, representations_d, device)
         self.dask_chunk_size = dask_chunk_size
 
     def compute_correlations(self):
+        import dask.array as da
+
         def center_gram(G):
             means = G.mean(0)
             means -= means.mean() / 2
