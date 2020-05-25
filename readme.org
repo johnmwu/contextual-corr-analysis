@@ -70,3 +70,14 @@ Our pipeline is:
 3. Analyze results (the OUTPUT_FILE above) in the =analysis= directory
 * modifying
 New correlation methods should extend =corr_methods.Method=. 
+* gallery
+SVCCA similarities (=Method= =CCA= in =corr_methods.py=):
+#+BEGIN_CENTER
+[[file:assets/svcca-biglabels-lowres.png]]
+#+END_CENTER
+
+CKA attention similarity (=Method= =AttnLinCKA= in
+=attention_corr_methods.py=):
+#+BEGIN_CENTER
+[[file:assets/attn-cka-biglabels-lowres.png]]
+#+END_CENTER
