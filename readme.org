@@ -4,7 +4,7 @@ tl;dr read intro and one of the usage headings.
 * intro
 Tools to understand neural representations, and application to
 contextualizers. A "contexualizer" is a model producing a
-context-dependent word embedding. 
+context-dependent word embedding.
 
 Concretely, similarity measures, eg.
 - [[https://arxiv.org/abs/1905.00414][CKA]]
@@ -23,7 +23,7 @@ This repository should be on your Python path.
 export PYTHONPATH="${PWD}:${PYTHONPATH}"
 #+END_SRC
 * usage (script)
-The main script is =main.py=. Simplified, its calling format is
+The main script is =main.py=.
 
 #+BEGIN_SRC sh
 main.py [--methods [METHODS ...]] REPRESENTATION_FILES OUTPUT_FILE
@@ -31,8 +31,8 @@ main.py [--methods [METHODS ...]] REPRESENTATION_FILES OUTPUT_FILE
 
 For examples, see =slurm= (eg. =mk_resultsN.sh= and
 =mk_resultsN-helper.sh=). To see all options, run ~python main.py
---help~. Note that =REPRESENTATION_FILES= is a file where each line
-contains a representation file. =OUTPUT_FILE= is a pickle dump. 
+--help~. Note that =REPRESENTATION_FILES= is a file containing an input
+file on each line. =OUTPUT_FILE= is a pickle dump.
 
 =main_attn.py= is analogous. 
 * usage (python)
@@ -50,15 +50,14 @@ You can also call the correlation methods directly from python. See
 	- help the reader understand
 	the resulting .py files.
 
-	These are basically files that contain an exact copy of the function,
-	just with loops denested (run once with an arbitrary value, to help
-	debugging) and structure broken down.
+	These are files containing a copy of the function with loops and
+  co. destructured (run once with an arbitrary value, to help debugging).
 
 	It may help you understand a function.
 - *slurm*. [[https://slurm.schedmd.com/documentation.html][SLURM]] scripts. 
 
-  Executable files are run directly as ~SCRIPTNAME~.
-- *other*. Everything else. Lots of junk in here. 
+  Run directly as ~SCRIPTNAME~.
+- *other*. Everything else. Lots of junk.
 * workflow
 Our pipeline is:
 1. Generate representations (hdf5 files)
