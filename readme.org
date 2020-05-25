@@ -1,4 +1,4 @@
-This repository accompanies the paper. 
+This repository accompanies the paper ([[https://arxiv.org/abs/2005.01172][arXiv]]). Accepted to ACL 2020. 
 
 tl;dr read intro and one of the usage headings. 
 * intro
